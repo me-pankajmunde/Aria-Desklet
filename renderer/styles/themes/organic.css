@@ -1,0 +1,92 @@
+/* ─── Organic / Living UI Theme ──────────────────────────────────────────── */
+:root {
+  --accent:      #5ebd7a;
+  --accent-dim:  #3d9a58;
+  --accent2:     #c5965a;
+  --text:        #2c3e2d;
+  --text-dim:    #7a8c7a;
+  --bg:          rgba(242, 247, 240, 0.93);
+  --border:      rgba(94, 189, 122, 0.22);
+  --chat-bg:     rgba(238, 246, 236, 0.98);
+  --settings-bg: rgba(238, 246, 236, 0.99);
+  --glow-color:  rgba(94, 189, 122, 0.25);
+  --font-display:'Lora', Georgia, serif;
+  --font-body:   'Outfit', sans-serif;
+  --particle:    #5ebd7a;
+}
+
+#app[data-theme="organic"] {
+  background: linear-gradient(
+    160deg,
+    #f2f7f0 0%,
+    #edf5e8 35%,
+    #ede8f0 70%,
+    #f5f0e8 100%
+  );
+  border: 1px solid rgba(94, 189, 122, 0.18);
+  box-shadow:
+    0 6px 28px rgba(0, 0, 0, 0.09),
+    0 2px 8px rgba(94, 189, 122, 0.12);
+}
+
+/* Grain overlay */
+#app[data-theme="organic"]::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  opacity: 0.03;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 256px;
+  pointer-events: none;
+  z-index: 1000;
+}
+
+/* Breathing animation on the whole card */
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50%       { transform: scale(1.004); }
+}
+#app[data-theme="organic"] {
+  animation: breathe 5s ease-in-out infinite;
+}
+#app[data-theme="organic"]:hover {
+  animation: none;
+  transform: translateY(-1px);
+  box-shadow:
+    0 10px 36px rgba(0, 0, 0, 0.12),
+    0 4px 12px rgba(94, 189, 122, 0.18);
+}
+
+.poem-text {
+  font-style: italic;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text, #2c3e2d);
+}
+.clock-display {
+  color: var(--accent2, #c5965a);
+  font-family: var(--font-display, 'Lora', serif);
+}
+.live-dot {
+  color: var(--accent, #5ebd7a);
+  animation: pulse 3s ease-in-out infinite;
+}
+.greeting   { color: var(--accent-dim, #3d9a58); font-style: italic; }
+.icon-btn:hover { background: rgba(94,189,122,0.12); }
+#chat-input:focus { border-color: var(--accent, #5ebd7a); }
+.send-btn { background: var(--accent, #5ebd7a); color: #fff; }
+.quick-btn:hover { background: var(--accent, #5ebd7a); color: #fff; border-color: var(--accent, #5ebd7a); }
+.setting-label { color: var(--text-dim, #7a8c7a); }
+.setting-input { color: var(--text, #2c3e2d); background: rgba(0,0,0,0.04); border-color: rgba(94,189,122,0.2); }
+.settings-title { color: var(--text, #2c3e2d); }
+.chat-close:hover { color: var(--text, #2c3e2d); }
+.settings-close:hover { color: var(--text, #2c3e2d); }
+.chat-bubble.user { background: var(--accent, #5ebd7a); color: #fff; }
+.chat-bubble.assistant { background: rgba(0,0,0,0.05); color: var(--text, #2c3e2d); }
+#chat-title { color: var(--text-dim, #7a8c7a); }
+.settings-section-title { color: var(--accent, #5ebd7a); }
+.toggle-slider { background: rgba(0,0,0,0.08); }
+.setting-toggle input:checked + .toggle-slider { background: var(--accent, #5ebd7a); }
+.setting-toggle input:checked + .toggle-slider::before { background: #fff; }

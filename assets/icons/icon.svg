@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'>
+  <rect width='512' height='512' rx='80' fill='%230a0a1a'/>
+  <circle cx='256' cy='256' r='180' fill='none' stroke='%2300d68f' stroke-width='12'/>
+  <circle cx='256' cy='256' r='8' fill='%2300d68f'/>
+  <line x1='256' y1='256' x2='256' y2='110' stroke='%2300d68f' stroke-width='10' stroke-linecap='round'/>
+  <line x1='256' y1='256' x2='320' y2='290' stroke='%2300d68f' stroke-width='8' stroke-linecap='round'/>
+  <ellipse cx='210' cy='360' rx='18' ry='14' fill='none' stroke='%2300d68f' stroke-width='6'/>
+  <ellipse cx='302' cy='360' rx='18' ry='14' fill='none' stroke='%2300d68f' stroke-width='6'/>
+  <path d='M 210 400 Q 256 430 302 400' fill='none' stroke='%2300d68f' stroke-width='7' stroke-linecap='round'/>
+</svg>

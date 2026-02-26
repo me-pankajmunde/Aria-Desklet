@@ -1,0 +1,75 @@
+/* ─── Soft & Playful / Tamagotchi Theme ──────────────────────────────────── */
+:root {
+  --accent:      #ff6b9d;
+  --accent-dim:  #c44d7b;
+  --accent2:     #6bcbff;
+  --text:        #3d2950;
+  --text-dim:    #8a6a8a;
+  --bg:          rgba(255, 235, 245, 0.94);
+  --border:      rgba(255, 107, 157, 0.25);
+  --chat-bg:     rgba(255, 248, 252, 0.98);
+  --settings-bg: rgba(255, 248, 252, 0.99);
+  --glow-color:  rgba(255, 107, 157, 0.3);
+  --font-display:'Bubblegum Sans', cursive;
+  --font-body:   'Nunito', sans-serif;
+  --particle:    #ff6b9d;
+}
+
+#app[data-theme="playful"] {
+  background: linear-gradient(
+    135deg,
+    #fff0f8 0%,
+    #f0f4ff 40%,
+    #f4fff0 100%
+  );
+  border: 2px solid rgba(255, 107, 157, 0.2);
+  box-shadow:
+    0 8px 24px rgba(255, 107, 157, 0.15),
+    0 2px 8px rgba(107, 157, 255, 0.10);
+}
+
+#app[data-theme="playful"]:hover {
+  box-shadow:
+    0 12px 32px rgba(255, 107, 157, 0.22),
+    0 4px 12px rgba(107, 157, 255, 0.15);
+  animation: wobble 0.4s ease;
+}
+
+@keyframes wobble {
+  0%   { transform: rotate(0deg) translateY(-1px); }
+  25%  { transform: rotate(-1deg) translateY(-1px); }
+  75%  { transform: rotate(1deg) translateY(-1px); }
+  100% { transform: rotate(0deg) translateY(-1px); }
+}
+
+.poem-text {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.6;
+  color: var(--text, #3d2950);
+}
+.clock-display {
+  font-weight: 900;
+  font-size: 13px;
+  color: var(--accent, #ff6b9d);
+}
+.live-dot {
+  color: var(--accent2, #6bcbff);
+  animation: bounce 0.8s ease-in-out infinite;
+}
+.greeting { color: var(--accent, #ff6b9d); font-weight: 700; }
+.icon-btn:hover { background: rgba(255,107,157,0.15); }
+#chat-input:focus { border-color: var(--accent, #ff6b9d); }
+.send-btn { background: var(--accent, #ff6b9d); color: #fff; }
+.quick-btn:hover { background: var(--accent, #ff6b9d); color: #fff; }
+.toggle-slider { background: rgba(0,0,0,0.1); }
+.setting-toggle input:checked + .toggle-slider { background: var(--accent, #ff6b9d); }
+.setting-toggle input:checked + .toggle-slider::before { background: #fff; }
+.setting-label { color: var(--text, #3d2950); }
+.setting-input { color: var(--text, #3d2950); background: rgba(0,0,0,0.04); border-color: rgba(255,107,157,0.2); }
+.settings-title { color: var(--text, #3d2950); }
+.chat-close:hover { color: var(--text, #3d2950); }
+.settings-close:hover { color: var(--text, #3d2950); }
+.chat-bubble.user { background: var(--accent, #ff6b9d); }
+.chat-bubble.assistant { background: rgba(0,0,0,0.05); color: var(--text, #3d2950); }
+#chat-title { color: var(--text-dim, #8a6a8a); }

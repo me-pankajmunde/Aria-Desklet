@@ -1,0 +1,44 @@
+{
+  "name": "rhyming-clock",
+  "version": "2.0.0",
+  "description": "AI-powered rhyming clock desktop companion with animated face, 4 themes, particles, voice & easter eggs",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "NODE_ENV=development electron .",
+    "dist": "electron-builder --linux",
+    "dist:appimage": "electron-builder --linux AppImage",
+    "dist:deb": "electron-builder --linux deb"
+  },
+  "keywords": ["electron", "desktop", "clock", "ai", "companion"],
+  "author": "FG POC",
+  "license": "MIT",
+  "dependencies": {
+    "electron-store": "^8.2.0"
+  },
+  "devDependencies": {
+    "electron": "^29.0.0",
+    "electron-builder": "^24.13.0"
+  },
+  "build": {
+    "appId": "com.pyoneers.rhymingclock",
+    "productName": "Rhyming Clock",
+    "icon": "assets/icons/icon.png",
+    "linux": {
+      "target": ["AppImage", "deb"],
+      "category": "Utility",
+      "desktop": {
+        "Name": "Rhyming Clock",
+        "Comment": "AI-powered desktop companion clock",
+        "Categories": "Utility;"
+      }
+    },
+    "files": [
+      "**/*",
+      "!node_modules/.bin",
+      "!**/*.md",
+      "!rhyming-clock/**"
+    ],
+    "extraResources": []
+  }
+}

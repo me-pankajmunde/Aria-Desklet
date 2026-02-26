@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-hashes'"/>
+  <title>Rhyming Clock</title>
+  <!-- Google Fonts for themed typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Nunito:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&family=Bubblegum+Sans&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="styles/base.css"/>
+  <link rel="stylesheet" id="theme-css" href="styles/themes/glassmorphism.css"/>
+</head>
+<body>
+  <!-- Particle canvas (background layer) -->
+  <canvas id="particle-canvas"></canvas>
+
+  <!-- Main widget card -->
+  <div id="app" class="card" data-theme="glassmorphism">
+
+    <!-- Drag handle (whole card is draggable, except interactive elements) -->
+    <div class="card-inner">
+
+      <!-- Face + greeting area -->
+      <div class="face-col">
+        <canvas id="face-canvas" width="96" height="96" title="Click to chat"></canvas>
+        <div id="greeting" class="greeting"></div>
+        <div id="face-accessory" class="face-accessory"></div>
+      </div>
+
+      <!-- Right content column -->
+      <div class="content-col">
+        <div id="poem-area">
+          <p id="poem-text" class="poem-text">Initialising…</p>
+        </div>
+
+        <div class="bottom-bar">
+          <span id="live-dot" class="live-dot">●</span>
+          <span id="clock-display" class="clock-display">--:--</span>
+          <div class="action-btns">
+            <button id="btn-voice"    class="icon-btn" title="Read poem aloud">🔊</button>
+            <button id="btn-mic"      class="icon-btn" title="Voice input">🎤</button>
+            <button id="btn-settings" class="icon-btn" title="Settings">⚙</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chat panel (slides up) -->
+    <div id="chat-panel" class="chat-panel hidden">
+      <div class="chat-header">
+        <span id="chat-title">💬 Ask Aria</span>
+        <button id="chat-close" class="chat-close">✕</button>
+      </div>
+      <div id="chat-history" class="chat-history"></div>
+      <div class="chat-quick-actions">
+        <button class="quick-btn" data-q="Tell me a joke">😂 Joke</button>
+        <button class="quick-btn" data-q="Motivate me">⚡ Motivate</button>
+        <button class="quick-btn" data-q="What should I know right now?">🧠 Insight</button>
+      </div>
+      <div class="chat-input-row">
+        <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off"/>
+        <button id="chat-send" class="send-btn">→</button>
+      </div>
+    </div>
+
+    <!-- Settings panel (slides in from right) -->
+    <div id="settings-panel" class="settings-panel hidden">
+      <!-- injected by settings.js -->
+    </div>
+
+    <!-- Game overlay -->
+    <div id="game-overlay" class="game-overlay hidden">
+      <!-- injected by easter-eggs.js -->
+    </div>
+
+  </div>
+
+  <!-- Scripts (module order matters) -->
+  <script src="js/theme-engine.js"></script>
+  <script src="js/face-canvas.js"></script>
+  <script src="js/particle-engine.js"></script>
+  <script src="js/voice.js"></script>
+  <script src="js/chat-panel.js"></script>
+  <script src="js/easter-eggs.js"></script>
+  <script src="js/settings-panel.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
