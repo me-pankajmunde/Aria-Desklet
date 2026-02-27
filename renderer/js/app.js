@@ -27,12 +27,15 @@ async function init() {
   applyThemeAccent();
 
   // Face
-  const faceEl = document.getElementById('face-canvas');
+  const faceEl = document.getElementById('face-container');
   FaceCanvas.init(faceEl);
   FaceCanvas.setColor(cfg.poem_color || ThemeEngine.getAccent());
   faceEl.addEventListener('click', (e) => {
     if (!e.ctrlKey) ChatPanel.toggle();
   });
+
+  // Stats
+  if (window.Stats) Stats.init();
 
   // Particles
   const partCanvas = document.getElementById('particle-canvas');
@@ -91,20 +94,28 @@ async function init() {
     const poem = document.getElementById('poem-text').textContent;
     const theme = ThemeEngine.current();
     Voice.speak(poem, theme);
-    document.getElementById('btn-voice').classList.add('active');
-    setTimeout(() => document.getElementById('btn-voice').classList.remove('active'), 2000);
+    const btn = document.getElementById('btn-voice');
+    btn.classList.add('bg-primary', 'text-black');
+    setTimeout(() => btn.classList.remove('bg-primary', 'text-black'), 2000);
   });
 
   // Mic button
   document.getElementById('btn-mic').addEventListener('click', () => {
     const micBtn = document.getElementById('btn-mic');
+    const statusText = document.getElementById('system-status');
+    const liveDot = document.getElementById('live-dot');
+    
     if (Voice.isListening()) {
       Voice.stopListening();
-      micBtn.classList.remove('active');
+      micBtn.classList.remove('bg-primary', 'text-black');
+      if (statusText) statusText.textContent = 'System Active';
+      if (liveDot) liveDot.classList.remove('bg-red-500');
       FaceCanvas.setExpression({ eyebrows: 'none' });
     } else {
       const started = Voice.startListening((transcript) => {
-        micBtn.classList.remove('active');
+        micBtn.classList.remove('bg-primary', 'text-black');
+        if (statusText) statusText.textContent = 'System Active';
+        if (liveDot) liveDot.classList.remove('bg-red-500');
         FaceCanvas.setExpression({ eyebrows: 'none' });
         ChatPanel.show();
         // Pre-fill input
@@ -112,16 +123,21 @@ async function init() {
         if (input) { input.value = transcript; input.focus(); }
       });
       if (started) {
-        micBtn.classList.add('active');
+        micBtn.classList.add('bg-primary', 'text-black');
+        if (statusText) statusText.textContent = 'Listening...';
+        if (liveDot) liveDot.classList.add('bg-red-500');
         FaceCanvas.setExpression({ eyebrows: 'raised', mouth: 'o' });
       }
     }
   });
 
   // Greeting area double-click → fortune
-  document.getElementById('greeting').addEventListener('dblclick', () => {
-    EasterEggs.triggerFortune();
-  });
+  const greetingEl = document.getElementById('greeting');
+  if (greetingEl) {
+    greetingEl.addEventListener('dblclick', () => {
+      EasterEggs.triggerFortune();
+    });
+  }
 
   // Start clock
   tick().catch(e => console.error('tick error:', e));
@@ -259,20 +275,17 @@ function formatTime(date) {
 
 function flashGreeting(h = new Date().getHours()) {
   const periods = {
-    morning:   { range: [5,  11], icon: '☀', emoji: '🌅' },
-    afternoon: { range: [12, 16], icon: '⚡', emoji: '☀' },
+    morning:   { range: [5,  11], icon: '☀️', emoji: '🌅' },
+    afternoon: { range: [12, 16], icon: '⚡', emoji: '☀️' },
     evening:   { range: [17, 20], icon: '🌙', emoji: '🌆' },
     night:     { range: [21, 23], icon: '✨', emoji: '🌙' },
   };
   for (const [period, { range, icon }] of Object.entries(periods)) {
     if (h >= range[0] && h <= range[1]) {
-      const uname   = (cfg.user_name || '').trim();
-      const nameStr = uname ? `, ${uname}` : '';
+      const uname   = (cfg.user_name || 'Pankaj').trim();
       const grEl    = document.getElementById('greeting');
       if (grEl) {
-        grEl.textContent = `Good ${period}${nameStr}! ${icon}`;
-        grEl.style.opacity = '1';
-        setTimeout(() => { grEl.style.opacity = '0'; }, 28000);
+        grEl.innerHTML = `Good ${period}, <span class="text-primary" id="user-name">${uname}!</span> <span class="inline-block animate-spin-slow ml-1">${icon}</span>`;
       }
       break;
     }
@@ -290,9 +303,10 @@ function applyGlow() {
   if (!app) return;
   const accent = cfg.poem_color || ThemeEngine.getAccent();
   if (cfg.glow_enabled !== false) {
-    app.style.filter   = `drop-shadow(0 0 14px ${accent}55)`;
+    // Apply glow to the main container or specific elements if needed
+    // app.style.filter = `drop-shadow(0 0 14px ${accent}55)`;
   } else {
-    app.style.filter = '';
+    // app.style.filter = '';
   }
 }
 

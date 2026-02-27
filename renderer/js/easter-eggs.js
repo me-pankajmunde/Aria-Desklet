@@ -212,7 +212,10 @@ const EasterEggs = {
   // ── Overlay helpers ──────────────────────────────────────────────────────
   _showOverlay(html) {
     if (!_overlay) return;
-    _overlay.innerHTML = html;
+    _overlay.innerHTML = `<div class="bg-surface-light dark:bg-surface-dark p-6 rounded-2xl shadow-2xl max-w-[80%] relative border border-slate-200 dark:border-slate-700">
+      <button onclick="EasterEggs.closeOverlay()" class="absolute top-2 right-2 p-1 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">✕</button>
+      ${html}
+    </div>`;
     _overlay.classList.remove('hidden');
   },
 

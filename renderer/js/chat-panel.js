@@ -48,23 +48,20 @@ const ChatPanel = {
 
   show() {
     if (!this.panel) return;
-    this.panel.classList.remove('hidden');
-    requestAnimationFrame(() => {
-      this.panel.classList.add('visible');
-    });
+    this.panel.classList.remove('translate-y-full');
+    this.panel.classList.add('translate-y-0');
     this.input.focus();
   },
 
   hide() {
     if (!this.panel) return;
-    this.panel.classList.remove('visible');
-    setTimeout(() => this.panel.classList.add('hidden'), 320);
+    this.panel.classList.remove('translate-y-0');
+    this.panel.classList.add('translate-y-full');
   },
 
   toggle() {
     if (!this.panel) return;
-    if (this.panel.classList.contains('hidden') ||
-        !this.panel.classList.contains('visible')) {
+    if (this.panel.classList.contains('translate-y-full')) {
       this.show();
     } else {
       this.hide();
@@ -110,20 +107,51 @@ const ChatPanel = {
 
   _addBubble(role, text, isThinking = false) {
     const bubble = document.createElement('div');
-    bubble.className = `chat-bubble ${role}${isThinking ? ' thinking' : ''}`;
+    
+    // Tailwind styling for bubbles
+    const baseClasses = "max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm";
+    const userClasses = "bg-primary text-black self-end rounded-br-sm";
+    const aiClasses = "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 self-start rounded-bl-sm";
+    
+    bubble.className = `${baseClasses} ${role === 'user' ? userClasses : aiClasses}`;
 
     if (isThinking) {
-      bubble.innerHTML = `<div class="dot-flashing"><span></span><span></span><span></span></div>`;
+      bubble.innerHTML = `<div class="flex space-x-1 items-center h-5">
+        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+      </div>`;
     } else {
       bubble.textContent = text;
-      bubble.style.animation = 'fadeIn 0.2s ease';
       _history.push({ role: role.replace('assistant', 'a').replace('user', 'u'), text });
       if (_history.length > 20) _history.shift();
+      
+      // Also show short replies in the speech bubble
+      if (role === 'assistant' && text.length < 50) {
+        const speechBubble = document.getElementById('speech-bubble');
+        const speechText = document.getElementById('speech-text');
+        if (speechBubble && speechText) {
+          speechText.textContent = text;
+          speechBubble.classList.remove('opacity-0');
+          speechBubble.classList.add('opacity-100');
+          
+          clearTimeout(this._speechTimeout);
+          this._speechTimeout = setTimeout(() => {
+            speechBubble.classList.remove('opacity-100');
+            speechBubble.classList.add('opacity-0');
+          }, 4000);
+        }
+      }
     }
 
-    this.history.appendChild(bubble);
+    // Wrap in a flex container to align left/right
+    const wrapper = document.createElement('div');
+    wrapper.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
+    wrapper.appendChild(bubble);
+
+    this.history.appendChild(wrapper);
     this.history.scrollTop = this.history.scrollHeight;
-    return bubble;
+    return wrapper;
   },
 };
 

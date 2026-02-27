@@ -4,82 +4,253 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Content-Security-Policy"
-        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-hashes'"/>
+        content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-hashes' https://cdn.tailwindcss.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"/>
   <title>Rhyming Clock</title>
-  <!-- Google Fonts for themed typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&family=Nunito:wght@400;700;900&family=DM+Sans:wght@300;400;500&family=Lora:ital,wght@0,400;0,600;1,400&family=Share+Tech+Mono&family=Bubblegum+Sans&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="styles/base.css"/>
-  <link rel="stylesheet" id="theme-css" href="styles/themes/glassmorphism.css"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "var(--color-primary, #00FF94)",
+            "primary-dim": "var(--color-primary-dim, #00CC76)",
+            "background-light": "var(--color-bg-light, #F0F4F8)",
+            "background-dark": "var(--color-bg-dark, #0B1120)",
+            "surface-light": "var(--color-surface-light, #FFFFFF)",
+            "surface-dark": "var(--color-surface-dark, #162032)",
+            "accent-blue": "#3B82F6",
+            "robot-eye-dark": "#1E3A8A",
+            "robot-eye-light": "#60A5FA",
+          },
+          fontFamily: {
+            sans: ['Outfit', 'sans-serif'],
+            display: ['Outfit', 'sans-serif'],
+          },
+          backgroundImage: {
+            'cosmic-gradient': 'radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 25%), radial-gradient(circle at 90% 80%, rgba(0, 255, 148, 0.08) 0%, transparent 25%)',
+            'grid-pattern': 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
+          },
+          animation: {
+            'float': 'float 6s ease-in-out infinite',
+            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            'glow': 'glow 2s ease-in-out infinite alternate',
+            'eye-track': 'eyeTrack 5s ease-in-out infinite',
+            'speech-pop': 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards',
+          },
+          keyframes: {
+            float: {
+              '0%, 100%': { transform: 'translateY(0)' },
+              '50%': { transform: 'translateY(-10px)' },
+            },
+            glow: {
+              'from': { boxShadow: '0 0 10px rgba(0, 255, 148, 0.2)' },
+              'to': { boxShadow: '0 0 20px rgba(0, 255, 148, 0.6)' },
+            },
+            eyeTrack: {
+              '0%, 100%': { transform: 'translateX(0)' },
+              '25%': { transform: 'translateX(-4px)' },
+              '75%': { transform: 'translateX(4px)' },
+            },
+            popIn: {
+              '0%': { opacity: '0', transform: 'scale(0.8) translateY(10px)' },
+              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
+            }
+          }
+        },
+      },
+    };
+  </script>
+  <style>
+    .bg-grid { background-size: 40px 40px; }
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .dark .glass-panel {
+      background: rgba(22, 32, 50, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .eye-blink { animation: blink 4s infinite; }
+    @keyframes blink {
+      0%, 96%, 100% { transform: scaleY(1); }
+      98% { transform: scaleY(0.1); }
+    }
+    .speech-bubble::after {
+      content: '';
+      position: absolute;
+      bottom: -8px;
+      left: 50%;
+      transform: translateX(-50%);
+      border-width: 8px 8px 0;
+      border-style: solid;
+      border-color: #F0F9FF transparent transparent transparent;
+    }
+    .dark .speech-bubble::after {
+      border-color: #1E293B transparent transparent transparent;
+    }
+    body { min-height: 100dvh; -webkit-app-region: drag; }
+    button, input, .no-drag { -webkit-app-region: no-drag; }
+    
+    /* Chat Panel Slide-up */
+    #chat-panel {
+      transition: transform 0.3s ease-in-out;
+    }
+    #chat-panel.hidden {
+      transform: translateY(100%);
+    }
+    
+    /* Settings Panel Slide-in */
+    #settings-panel {
+      transition: transform 0.3s ease-in-out;
+    }
+    #settings-panel.hidden {
+      transform: translateX(100%);
+    }
+  </style>
 </head>
-<body>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans selection:bg-primary selection:text-background-dark overflow-hidden relative transition-colors duration-300 dark">
+  
   <!-- Particle canvas (background layer) -->
-  <canvas id="particle-canvas"></canvas>
+  <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
 
-  <!-- Main widget card -->
-  <div id="app" class="card" data-theme="glassmorphism">
+  <div class="fixed inset-0 pointer-events-none z-0">
+    <div class="absolute inset-0 bg-grid-pattern bg-grid opacity-30 dark:opacity-20"></div>
+    <div class="absolute inset-0 bg-cosmic-gradient"></div>
+    <div class="absolute top-20 left-10 w-1 h-1 bg-primary rounded-full opacity-40 animate-pulse"></div>
+    <div class="absolute top-40 right-20 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-30 animate-pulse delay-700"></div>
+    <div class="absolute bottom-32 left-1/4 w-1 h-1 bg-purple-400 rounded-full opacity-30 animate-pulse delay-300"></div>
+  </div>
 
-    <!-- Drag handle (whole card is draggable, except interactive elements) -->
-    <div class="card-inner">
-
-      <!-- Face + greeting area -->
-      <div class="face-col">
-        <canvas id="face-canvas" width="96" height="96" title="Click to chat"></canvas>
-        <div id="greeting" class="greeting"></div>
-        <div id="face-accessory" class="face-accessory"></div>
-      </div>
-
-      <!-- Right content column -->
-      <div class="content-col">
-        <div id="poem-area">
-          <p id="poem-text" class="poem-text">Initialising…</p>
+  <div id="app" class="relative z-10 flex flex-row h-[100dvh] w-full px-2 py-2 items-center justify-between overflow-hidden space-x-2">
+    
+    <!-- Left Side: Face & Greeting -->
+    <div class="flex flex-col items-center justify-center w-1/4 h-full">
+      <div id="face-container" class="relative animate-float group cursor-pointer flex flex-col items-center no-drag scale-50 origin-center -mt-20">
+        <div id="speech-bubble" class="speech-bubble absolute -top-16 opacity-0 bg-sky-50 dark:bg-slate-800 px-4 py-2 rounded-xl shadow-lg border border-sky-100 dark:border-slate-700 z-20 transition-opacity duration-300">
+          <p id="speech-text" class="text-xs font-medium text-slate-600 dark:text-sky-200 whitespace-nowrap">You got this! 🚀</p>
         </div>
+        <div class="absolute inset-0 bg-blue-500 opacity-10 blur-3xl rounded-full transform scale-150 group-hover:opacity-20 transition-opacity duration-500 pointer-events-none"></div>
+        
+        <!-- SVG Face -->
+        <svg id="face-svg" class="relative z-10 drop-shadow-2xl" fill="none" height="120" viewBox="0 0 200 120" width="200" xmlns="http://www.w3.org/2000/svg">
+          <rect class="stroke-slate-700 dark:stroke-slate-600" fill="#0B1120" height="100" rx="20" stroke-width="2" width="180" x="10" y="10"></rect>
+          <path id="face-mouth" d="M20 20 Q 50 15, 90 20 T 180 30" fill="none" stroke="white" stroke-opacity="0.05" stroke-width="2"></path>
+          <g class="eye-blink origin-center" style="transform-origin: 100px 60px;">
+            <g id="eyes-group" class="animate-eye-track">
+              <circle class="dark:fill-blue-600" cx="70" cy="60" fill="#3B82F6" r="18"></circle> 
+              <circle class="dark:fill-blue-300" cx="66" cy="56" fill="#60A5FA" r="12"></circle> 
+              <circle class="dark:fill-blue-600" cx="130" cy="60" fill="#3B82F6" r="18"></circle>
+              <circle class="dark:fill-blue-300" cx="126" cy="56" fill="#60A5FA" r="12"></circle>
+            </g>
+          </g>
+        </svg>
+        
+        <div class="w-16 h-4 bg-gradient-to-b from-slate-700 to-slate-800 rounded-b-lg -mt-3 relative -z-10 opacity-80"></div>
+        <div class="mt-2 text-center">
+          <h2 id="greeting" class="text-sm font-bold text-slate-800 dark:text-white">
+            Hi, <span class="text-primary" id="user-name">Pankaj!</span>
+          </h2>
+        </div>
+      </div>
+    </div>
 
-        <div class="bottom-bar">
-          <span id="live-dot" class="live-dot">●</span>
-          <span id="clock-display" class="clock-display">--:--</span>
-          <div class="action-btns">
-            <button id="btn-voice"    class="icon-btn" title="Read poem aloud">🔊</button>
-            <button id="btn-mic"      class="icon-btn" title="Voice input">🎤</button>
-            <button id="btn-settings" class="icon-btn" title="Settings">⚙</button>
+    <!-- Middle: Poem & Clock -->
+    <div class="flex flex-col items-center justify-center w-2/4 h-full">
+      <div class="w-full glass-panel rounded-2xl p-3 relative overflow-hidden transition-all duration-300 hover:bg-opacity-10 hover:border-primary/30 flex flex-col justify-center h-full">
+        <div class="absolute top-1 left-2 text-3xl font-serif text-primary opacity-20 select-none">"</div>
+        <div class="relative z-10 flex flex-col space-y-1">
+          <p id="poem-text" class="text-sm md:text-base font-light leading-snug text-slate-700 dark:text-slate-100 tracking-wide text-center line-clamp-3">
+            Initialising…
+          </p>
+          <div class="flex items-center justify-center space-x-3 pt-1">
+            <div class="flex items-center space-x-1">
+              <span class="material-icons-round text-primary text-xs">schedule</span>
+              <span id="clock-display" class="text-primary font-mono text-xs tracking-wider">--:--</span>
+            </div>
+            <span class="text-slate-400 dark:text-slate-600 text-xs">•</span>
+            <div class="flex items-center space-x-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+              <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">ON TRACK</span>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Chat panel (slides up) -->
-    <div id="chat-panel" class="chat-panel hidden">
-      <div class="chat-header">
-        <span id="chat-title">💬 Ask Aria</span>
-        <button id="chat-close" class="chat-close">✕</button>
-      </div>
-      <div id="chat-history" class="chat-history"></div>
-      <div class="chat-quick-actions">
-        <button class="quick-btn" data-q="Tell me a joke">😂 Joke</button>
-        <button class="quick-btn" data-q="Motivate me">⚡ Motivate</button>
-        <button class="quick-btn" data-q="What should I know right now?">🧠 Insight</button>
-      </div>
-      <div class="chat-input-row">
-        <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off"/>
-        <button id="chat-send" class="send-btn">→</button>
+    <!-- Right Side: Stats & Controls -->
+    <div class="flex flex-col items-end justify-center w-1/4 h-full">
+      <div class="glass-panel rounded-2xl p-2 flex flex-col items-center justify-center shadow-lg shadow-black/5 dark:shadow-black/20 w-full h-full">
+        <div class="flex items-center justify-around w-full mb-1 flex-1">
+          <div class="flex flex-col items-center">
+            <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Focus</span>
+            <span id="focus-stat" class="text-sm font-bold text-slate-800 dark:text-white">0m</span>
+          </div>
+          <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
+          <div class="flex flex-col items-center">
+            <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Streak</span>
+            <span id="streak-stat" class="text-sm font-bold text-slate-800 dark:text-white">0d</span>
+          </div>
+        </div>
+        <div class="flex items-center justify-center space-x-2 w-full pt-1 border-t border-slate-200 dark:border-slate-700/50">
+          <button id="btn-mic" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-black dark:hover:bg-primary dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
+            <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">mic</span>
+          </button>
+          <button id="btn-voice" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-black dark:hover:bg-primary dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
+            <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">volume_up</span>
+          </button>
+          <button id="btn-settings" class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors no-drag">
+            <span class="material-icons-round text-slate-500 dark:text-slate-400 text-[12px]">settings</span>
+          </button>
+        </div>
       </div>
     </div>
-
-    <!-- Settings panel (slides in from right) -->
-    <div id="settings-panel" class="settings-panel hidden">
-      <!-- injected by settings.js -->
-    </div>
-
-    <!-- Game overlay -->
-    <div id="game-overlay" class="game-overlay hidden">
-      <!-- injected by easter-eggs.js -->
-    </div>
-
   </div>
 
-  <!-- Scripts (module order matters) -->
+  <!-- Chat panel (slides up) -->
+  <div id="chat-panel" class="fixed inset-x-0 bottom-0 h-2/3 bg-surface-light dark:bg-surface-dark rounded-t-3xl shadow-2xl z-50 flex flex-col translate-y-full border-t border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out">
+    <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+      <span id="chat-title" class="font-bold text-slate-800 dark:text-white">💬 Ask Aria</span>
+      <button id="chat-close" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 no-drag">
+        <span class="material-icons-round text-slate-500">close</span>
+      </button>
+    </div>
+    <div id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
+    <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-background-light dark:bg-background-dark">
+      <div class="flex space-x-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Tell me a joke">😂 Joke</button>
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Motivate me">⚡ Motivate</button>
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="What should I know right now?">🧠 Insight</button>
+      </div>
+      <div class="flex items-center space-x-2">
+        <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off" class="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-primary no-drag"/>
+        <button id="chat-send" class="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center hover:bg-primary-dim transition-colors no-drag">
+          <span class="material-icons-round">send</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Settings panel (slides in from right) -->
+  <div id="settings-panel" class="fixed inset-y-0 right-0 w-80 bg-surface-light dark:bg-surface-dark shadow-2xl z-50 flex flex-col translate-x-full border-l border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out">
+    <!-- injected by settings.js -->
+  </div>
+
+  <!-- Game overlay -->
+  <div id="game-overlay" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center">
+    <!-- injected by easter-eggs.js -->
+  </div>
+
+  <!-- Scripts -->
   <script src="js/theme-engine.js"></script>
-  <script src="js/face-canvas.js"></script>
+  <script src="js/face-svg.js"></script>
+  <script src="js/stats.js"></script>
   <script src="js/particle-engine.js"></script>
   <script src="js/voice.js"></script>
   <script src="js/chat-panel.js"></script>

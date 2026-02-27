@@ -229,7 +229,7 @@ function createWindow() {
   const display = screen.getPrimaryDisplay();
   const { width: sw, height: sh } = display.workAreaSize;
 
-  const W = 480, H = 250;
+  const W = 600, H = 200;
   let x, y;
   switch (cfg.position) {
     case 'bottom-right': x = sw - W - 40; y = sh - H - 40; break;

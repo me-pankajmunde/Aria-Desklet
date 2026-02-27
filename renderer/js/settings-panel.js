@@ -21,82 +21,86 @@ const SettingsPanel = {
   show() {
     if (!_panel) return;
     this._render();
-    _panel.classList.remove('hidden');
-    requestAnimationFrame(() => _panel.classList.add('visible'));
+    _panel.classList.remove('translate-x-full');
+    _panel.classList.add('translate-x-0');
   },
 
   hide() {
     if (!_panel) return;
-    _panel.classList.remove('visible');
-    setTimeout(() => _panel.classList.add('hidden'), 360);
+    _panel.classList.remove('translate-x-0');
+    _panel.classList.add('translate-x-full');
   },
 
   _render() {
     if (!_panel) return;
     const name = _spCfg.assistant_name || 'Aria';
     _panel.innerHTML = `
-      <div class="settings-header">
-        <span class="settings-title">⚙ Settings</span>
-        <button class="settings-close" onclick="SettingsPanel.hide()">✕</button>
+      <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
+        <span class="font-bold text-slate-800 dark:text-white">⚙ Settings</span>
+        <button class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 no-drag" onclick="SettingsPanel.hide()">
+          <span class="material-icons-round text-slate-500">close</span>
+        </button>
       </div>
-
-      <!-- THEME -->
-      <div class="settings-section">
-        <div class="settings-section-title">Theme</div>
-        <div class="theme-picker">
-          ${this._themePicker()}
+      
+      <div class="flex-1 overflow-y-auto p-4 space-y-6 text-sm text-slate-700 dark:text-slate-300">
+        <!-- THEME -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">Theme</div>
+          <div class="flex space-x-2">
+            ${this._themePicker()}
+          </div>
         </div>
-      </div>
 
-      <!-- PERSONA -->
-      <div class="settings-section">
-        <div class="settings-section-title">Persona</div>
-        ${this._textRow('assistant_name', 'Name', name)}
-        ${this._textRow('user_name', 'Your name', _spCfg.user_name || '')}
-      </div>
-
-      <!-- APPEARANCE -->
-      <div class="settings-section">
-        <div class="settings-section-title">Appearance</div>
-        ${this._colorRow('poem_color',  'Poem color', _spCfg.poem_color)}
-        ${this._colorRow('clock_color', 'Clock color', _spCfg.clock_color)}
-        ${this._colorRow('bg_color',    'BG color', _spCfg.bg_color)}
-        ${this._sliderRow('bg_alpha', 'Opacity', Math.round(_spCfg.bg_alpha * 100), 10, 100)}
-        ${this._toggleRow('glow_enabled', 'Neon glow', _spCfg.glow_enabled)}
-        ${this._toggleRow('show_face',    'Show face', _spCfg.show_face)}
-        ${this._toggleRow('particles',    'Particles', _spCfg.particles)}
-      </div>
-
-      <!-- FEATURES -->
-      <div class="settings-section">
-        <div class="settings-section-title">Features</div>
-        ${this._toggleRow('mood_auto',    'Auto mood',      _spCfg.mood_auto)}
-        ${this._toggleRow('hourly_tips',  'Hourly tips',    _spCfg.hourly_tips)}
-        ${this._toggleRow('voice_enabled','Voice enabled',  _spCfg.voice_enabled)}
-        ${this._toggleRow('auto_read_poems','Read poems',   _spCfg.auto_read_poems)}
-        ${this._toggleRow('easter_eggs',  'Easter eggs',    _spCfg.easter_eggs)}
-      </div>
-
-      <!-- POSITION -->
-      <div class="settings-section">
-        <div class="settings-section-title">Position</div>
-        <div class="setting-row">
-          <label class="setting-label">Corner</label>
-          <select class="setting-input" id="s-position" style="flex:1; cursor:pointer;">
-            ${['bottom-right','bottom-left','top-right','top-left'].map(p =>
-              `<option value="${p}" ${_spCfg.position === p ? 'selected' : ''}>${p.replace('-',' ')}</option>`
-            ).join('')}
-          </select>
+        <!-- PERSONA -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">Persona</div>
+          ${this._textRow('assistant_name', 'Name', name)}
+          ${this._textRow('user_name', 'Your name', _spCfg.user_name || '')}
         </div>
-      </div>
 
-      <!-- ABOUT -->
-      <div class="settings-section">
-        <div class="settings-section-title">About</div>
-        <div style="font-size:11px; color:var(--text-dim); font-family:var(--font-body); line-height:1.8;">
-          <b style="color:var(--text)">Rhyming Clock v2</b> · Electron<br/>
-          Ctrl+click face ×3 → dress-up<br/>
-          Chat: <i>dance</i> · <i>fortune</i> · <i>spin</i> · <i>tictactoe</i>
+        <!-- APPEARANCE -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">Appearance</div>
+          ${this._colorRow('poem_color',  'Poem color', _spCfg.poem_color)}
+          ${this._colorRow('clock_color', 'Clock color', _spCfg.clock_color)}
+          ${this._colorRow('bg_color',    'BG color', _spCfg.bg_color)}
+          ${this._sliderRow('bg_alpha', 'Opacity', Math.round(_spCfg.bg_alpha * 100), 10, 100)}
+          ${this._toggleRow('glow_enabled', 'Neon glow', _spCfg.glow_enabled)}
+          ${this._toggleRow('show_face',    'Show face', _spCfg.show_face)}
+          ${this._toggleRow('particles',    'Particles', _spCfg.particles)}
+        </div>
+
+        <!-- FEATURES -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">Features</div>
+          ${this._toggleRow('mood_auto',    'Auto mood',      _spCfg.mood_auto)}
+          ${this._toggleRow('hourly_tips',  'Hourly tips',    _spCfg.hourly_tips)}
+          ${this._toggleRow('voice_enabled','Voice enabled',  _spCfg.voice_enabled)}
+          ${this._toggleRow('auto_read_poems','Read poems',   _spCfg.auto_read_poems)}
+          ${this._toggleRow('easter_eggs',  'Easter eggs',    _spCfg.easter_eggs)}
+        </div>
+
+        <!-- POSITION -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">Position</div>
+          <div class="flex justify-between items-center">
+            <label>Corner</label>
+            <select class="bg-slate-100 dark:bg-slate-800 border-none rounded px-2 py-1 text-sm no-drag" id="s-position">
+              ${['bottom-right','bottom-left','top-right','top-left'].map(p =>
+                `<option value="${p}" ${_spCfg.position === p ? 'selected' : ''}>${p.replace('-',' ')}</option>`
+              ).join('')}
+            </select>
+          </div>
+        </div>
+
+        <!-- ABOUT -->
+        <div class="space-y-2">
+          <div class="font-semibold text-xs uppercase tracking-wider text-slate-500">About</div>
+          <div class="text-xs text-slate-500 leading-relaxed">
+            <b class="text-slate-700 dark:text-slate-300">Rhyming Clock v2</b> · Electron<br/>
+            Ctrl+click face ×3 → dress-up<br/>
+            Chat: <i>dance</i> · <i>fortune</i> · <i>spin</i> · <i>tictactoe</i>
+          </div>
         </div>
       </div>
     `;
@@ -105,47 +109,47 @@ const SettingsPanel = {
 
   _themePicker() {
     return Object.entries(ThemeEngine.getMeta()).map(([id, meta]) => {
-      const active = _spCfg.theme === id ? 'active' : '';
-      return `<div class="theme-swatch ${meta.swatchClass} ${active}" 
+      const active = _spCfg.theme === id ? 'ring-2 ring-primary' : '';
+      return `<div class="w-8 h-8 rounded-full cursor-pointer no-drag ${active}" 
+                   style="background-color: ${meta.accent}"
                    title="${meta.label}"
                    onclick="SettingsPanel._setTheme('${id}')">
-                <span>${meta.label}</span>
               </div>`;
     }).join('');
   },
 
   _textRow(key, label, val) {
-    return `<div class="setting-row">
-      <label class="setting-label">${label}</label>
-      <input class="setting-input" type="text" id="s-${key}" value="${this._esc(val)}"
+    return `<div class="flex justify-between items-center">
+      <label>${label}</label>
+      <input class="bg-slate-100 dark:bg-slate-800 border-none rounded px-2 py-1 text-sm w-32 no-drag" type="text" id="s-${key}" value="${this._esc(val)}"
              oninput="SettingsPanel._patch('${key}', this.value)"/>
     </div>`;
   },
 
   _colorRow(key, label, val) {
-    return `<div class="setting-row">
-      <label class="setting-label">${label}</label>
+    return `<div class="flex justify-between items-center">
+      <label>${label}</label>
       <input type="color" id="s-${key}" value="${val || '#00d68f'}"
-             class="color-btn" style="background:${val}"
-             oninput="SettingsPanel._patch('${key}', this.value); this.style.background=this.value"/>
+             class="w-8 h-8 rounded cursor-pointer border-none p-0 no-drag"
+             oninput="SettingsPanel._patch('${key}', this.value)"/>
     </div>`;
   },
 
   _sliderRow(key, label, val, min, max) {
-    return `<div class="setting-row">
-      <label class="setting-label">${label}</label>
-      <input type="range" class="setting-slider" min="${min}" max="${max}" value="${val}"
+    return `<div class="flex justify-between items-center">
+      <label>${label}</label>
+      <input type="range" class="w-32 accent-primary no-drag" min="${min}" max="${max}" value="${val}"
              id="s-${key}" oninput="SettingsPanel._patch('${key}', this.value/100)"/>
     </div>`;
   },
 
   _toggleRow(key, label, val) {
-    return `<div class="setting-row">
-      <label class="setting-label">${label}</label>
-      <label class="setting-toggle">
-        <input type="checkbox" id="s-${key}" ${val ? 'checked' : ''}
+    return `<div class="flex justify-between items-center">
+      <label>${label}</label>
+      <label class="relative inline-flex items-center cursor-pointer no-drag">
+        <input type="checkbox" id="s-${key}" class="sr-only peer" ${val ? 'checked' : ''}
                onchange="SettingsPanel._patch('${key}', this.checked)"/>
-        <span class="toggle-slider"></span>
+        <div class="w-9 h-5 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-primary"></div>
       </label>
     </div>`;
   },
