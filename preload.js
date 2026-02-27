@@ -11,11 +11,16 @@ contextBridge.exposeInMainWorld('rClock', {
   saveSettings:   (cfg)         => ipcRenderer.invoke('save-settings', cfg),
 
   // AI calls
-  getPoem:        (payload)     => ipcRenderer.invoke('get-poem', payload),
-  getTip:         (payload)     => ipcRenderer.invoke('get-tip', payload),
-  getChat:        (payload)     => ipcRenderer.invoke('get-chat', payload),
-  getExpression:  (payload)     => ipcRenderer.invoke('get-expression', payload),
-  getMoodNow:     ()            => ipcRenderer.invoke('get-mood-now'),
+  getPoem:          (payload)   => ipcRenderer.invoke('get-poem', payload),
+  getTip:           (payload)   => ipcRenderer.invoke('get-tip', payload),
+  getChat:          (payload)   => ipcRenderer.invoke('get-chat', payload),
+  getExpression:    (payload)   => ipcRenderer.invoke('get-expression', payload),
+  getMoodNow:       ()          => ipcRenderer.invoke('get-mood-now'),
+
+  // Emotion & activity AI calls
+  analyzeSentiment: (payload)   => ipcRenderer.invoke('analyze-sentiment', payload),
+  getWorkCheckin:   (payload)   => ipcRenderer.invoke('get-work-checkin', payload),
+  getPartnerProfile:(payload)   => ipcRenderer.invoke('get-partner-profile', payload),
 
   // App control
   quit:           ()            => ipcRenderer.invoke('quit-app'),
