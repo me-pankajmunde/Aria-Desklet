@@ -49,19 +49,28 @@ const Stats = {
 
   startFocusTimer() {
     if (this._focusInterval) clearInterval(this._focusInterval);
-    
+
     this._focusInterval = setInterval(() => {
       this.focusMinutes++;
+      // Tick the activity tracker every minute
+      if (window.ActivityTracker) ActivityTracker.tick();
       this.updateUI();
     }, 60000); // Every minute
   },
 
   updateUI() {
-    const focusEl = document.getElementById('focus-stat');
-    const streakEl = document.getElementById('streak-stat');
-    
-    if (focusEl) focusEl.textContent = `${this.focusMinutes}m`;
+    const focusEl   = document.getElementById('focus-stat');
+    const streakEl  = document.getElementById('streak-stat');
+    const sessEl    = document.getElementById('sessions-stat');
+    const scoreEl   = document.getElementById('score-stat');
+
+    if (focusEl)  focusEl.textContent  = `${this.focusMinutes}m`;
     if (streakEl) streakEl.textContent = `${this.streakDays}d`;
+
+    if (window.ActivityTracker) {
+      if (sessEl)  sessEl.textContent  = `${ActivityTracker.getTodaySessionCount()}`;
+      if (scoreEl) scoreEl.textContent = `${ActivityTracker.getProductivityScore()}`;
+    }
   }
 };
 

@@ -141,17 +141,28 @@
         <!-- SVG Face -->
         <svg id="face-svg" class="relative z-10 drop-shadow-2xl" fill="none" height="120" viewBox="0 0 200 120" width="200" xmlns="http://www.w3.org/2000/svg">
           <rect class="stroke-slate-700 dark:stroke-slate-600" fill="#0B1120" height="100" rx="20" stroke-width="2" width="180" x="10" y="10"></rect>
-          <path id="face-mouth" d="M20 20 Q 50 15, 90 20 T 180 30" fill="none" stroke="white" stroke-opacity="0.05" stroke-width="2"></path>
+          <path id="face-mouth" d="M75 85 Q 100 97, 125 85" fill="none" stroke="white" stroke-opacity="0.7" stroke-width="2.5" stroke-linecap="round"></path>
+          <!-- Eyebrows (hidden by default, shown by AI emotion) -->
+          <path id="eyebrow-left"  d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
+          <path id="eyebrow-right" d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
+          <!-- Blush (hidden by default) -->
+          <ellipse id="face-blush-left"  cx="50"  cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
+          <ellipse id="face-blush-right" cx="150" cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
           <g class="eye-blink origin-center" style="transform-origin: 100px 60px;">
             <g id="eyes-group" class="animate-eye-track">
-              <circle class="dark:fill-blue-600" cx="70" cy="60" fill="#3B82F6" r="18"></circle> 
-              <circle class="dark:fill-blue-300" cx="66" cy="56" fill="#60A5FA" r="12"></circle> 
+              <circle class="dark:fill-blue-600" cx="70" cy="60" fill="#3B82F6" r="18"></circle>
+              <circle class="dark:fill-blue-300" cx="66" cy="56" fill="#60A5FA" r="12"></circle>
               <circle class="dark:fill-blue-600" cx="130" cy="60" fill="#3B82F6" r="18"></circle>
               <circle class="dark:fill-blue-300" cx="126" cy="56" fill="#60A5FA" r="12"></circle>
             </g>
           </g>
         </svg>
         
+        <!-- Emotion dot — color driven by AI sentiment -->
+        <div id="emotion-dot"
+          class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-slate-500
+                 border border-slate-700 z-20 transition-colors duration-700"
+          title="neutral"></div>
         <div class="w-16 h-4 bg-gradient-to-b from-slate-700 to-slate-800 rounded-b-lg -mt-3 relative -z-10 opacity-80"></div>
         <div class="mt-2 text-center">
           <h2 id="greeting" class="text-sm font-bold text-slate-800 dark:text-white">
@@ -165,6 +176,12 @@
     <div class="flex flex-col items-center justify-center w-2/4 h-full">
       <div class="w-full glass-panel rounded-2xl p-3 relative overflow-hidden transition-all duration-300 hover:bg-opacity-10 hover:border-primary/30 flex flex-col justify-center h-full">
         <div class="absolute top-1 left-2 text-3xl font-serif text-primary opacity-20 select-none">"</div>
+        <!-- Work Buddy session badge -->
+        <div id="work-buddy-badge" class="hidden relative z-10 flex items-center space-x-1 mb-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block"></span>
+          <span class="text-[9px] text-primary font-semibold uppercase tracking-widest">FOCUS</span>
+          <span id="buddy-elapsed" class="text-[9px] text-primary font-mono ml-0.5">0m</span>
+        </div>
         <div class="relative z-10 flex flex-col space-y-1">
           <p id="poem-text" class="text-sm md:text-base font-light leading-snug text-slate-700 dark:text-slate-100 tracking-wide text-center line-clamp-3">
             Initialising…
@@ -187,15 +204,23 @@
     <!-- Right Side: Stats & Controls -->
     <div class="flex flex-col items-end justify-center w-1/4 h-full">
       <div class="glass-panel rounded-2xl p-2 flex flex-col items-center justify-center shadow-lg shadow-black/5 dark:shadow-black/20 w-full h-full">
-        <div class="flex items-center justify-around w-full mb-1 flex-1">
+        <!-- 4-stat grid: Focus / Streak / Sessions / Score -->
+        <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 w-full mb-1 flex-1 content-center">
           <div class="flex flex-col items-center">
-            <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Focus</span>
-            <span id="focus-stat" class="text-sm font-bold text-slate-800 dark:text-white">0m</span>
+            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Focus</span>
+            <span id="focus-stat" class="text-xs font-bold text-slate-800 dark:text-white">0m</span>
           </div>
-          <div class="h-4 w-px bg-slate-200 dark:bg-slate-700"></div>
           <div class="flex flex-col items-center">
-            <span class="text-[8px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Streak</span>
-            <span id="streak-stat" class="text-sm font-bold text-slate-800 dark:text-white">0d</span>
+            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Streak</span>
+            <span id="streak-stat" class="text-xs font-bold text-slate-800 dark:text-white">0d</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sessions</span>
+            <span id="sessions-stat" class="text-xs font-bold text-slate-800 dark:text-white">0</span>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Score</span>
+            <span id="score-stat" class="text-xs font-bold text-primary">—</span>
           </div>
         </div>
         <div class="flex items-center justify-center space-x-2 w-full pt-1 border-t border-slate-200 dark:border-slate-700/50">
@@ -227,6 +252,8 @@
         <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Tell me a joke">😂 Joke</button>
         <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Motivate me">⚡ Motivate</button>
         <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="What should I know right now?">🧠 Insight</button>
+        <button id="btn-start-focus" class="whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🎯 Focus</button>
+        <button id="btn-find-partner" class="whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🤝 Partner</button>
       </div>
       <div class="flex items-center space-x-2">
         <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off" class="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-primary no-drag"/>
@@ -247,6 +274,20 @@
     <!-- injected by easter-eggs.js -->
   </div>
 
+  <!-- Achievement toast notification -->
+  <div id="achievement-toast"
+    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] pointer-events-none
+           opacity-0 translate-y-4 transition-all duration-500 ease-out">
+    <div class="bg-slate-900 border border-primary/40 rounded-2xl px-4 py-2 shadow-2xl
+                flex items-center space-x-3 whitespace-nowrap">
+      <span class="text-base">🏆</span>
+      <div>
+        <div class="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Achievement Unlocked</div>
+        <div id="achievement-label" class="text-xs font-bold text-white">First Focus</div>
+      </div>
+    </div>
+  </div>
+
   <!-- Scripts -->
   <script src="js/theme-engine.js"></script>
   <script src="js/face-svg.js"></script>
@@ -256,6 +297,8 @@
   <script src="js/chat-panel.js"></script>
   <script src="js/easter-eggs.js"></script>
   <script src="js/settings-panel.js"></script>
+  <script src="js/activity-tracker.js"></script>
+  <script src="js/work-buddy.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

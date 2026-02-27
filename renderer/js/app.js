@@ -55,6 +55,60 @@ async function init() {
   // Settings
   SettingsPanel.init(cfg);
 
+  // Activity Tracker + Work Buddy (must come after EasterEggs so all globals are ready)
+  if (window.ActivityTracker) await ActivityTracker.init();
+  if (window.WorkBuddy)       WorkBuddy.init(cfg);
+
+  // ── Achievement toast handler ────────────────────────────────────────────
+  window.addEventListener('achievement-unlocked', (e) => {
+    const label   = e.detail && e.detail.label ? e.detail.label : '🎉 Achievement!';
+    const toast   = document.getElementById('achievement-toast');
+    const labelEl = document.getElementById('achievement-label');
+    if (!toast || !labelEl) return;
+
+    labelEl.textContent = label;
+    toast.classList.remove('opacity-0', 'translate-y-4');
+    toast.classList.add('opacity-100', 'translate-y-0');
+
+    // Celebratory face + particles
+    if (window.FaceCanvas) FaceCanvas.triggerReaction('star');
+    if (window.ParticleEngine && cfg.particles !== false) {
+      ParticleEngine.setType('confetti', { count: 50, baseColor: null });
+      setTimeout(() => applyDefaultParticlesForMood(currentMood, ThemeEngine.current()), 4500);
+    }
+
+    // Auto-dismiss toast after 3.5 s
+    clearTimeout(window._achieveToastTimer);
+    window._achieveToastTimer = setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-4');
+      toast.classList.remove('opacity-100', 'translate-y-0');
+    }, 3500);
+  });
+
+  // ── Session milestone handler (25m / 50m / 90m) ──────────────────────────
+  window.addEventListener('session-milestone', (e) => {
+    const m     = e.detail && e.detail.minutes;
+    const msgs  = {
+      25: '25 min of focus! You\'re on a roll! 🎯',
+      50: '50 minutes in — incredible focus! 💪',
+      90: '90 minutes deep! Absolute legend! 🔥',
+    };
+    const text  = msgs[m] || `${m} minutes of focus!`;
+    const bubble = document.getElementById('speech-bubble');
+    const textEl = document.getElementById('speech-text');
+    if (bubble && textEl) {
+      textEl.textContent = text;
+      bubble.classList.remove('opacity-0');
+      bubble.classList.add('opacity-100');
+      clearTimeout(window._milestoneTimer);
+      window._milestoneTimer = setTimeout(() => {
+        bubble.classList.remove('opacity-100');
+        bubble.classList.add('opacity-0');
+      }, 5000);
+    }
+    if (window.FaceCanvas) FaceCanvas.triggerReaction('heart');
+  });
+
   // Theme cycle from tray
   window.rClock.on('cycle-theme', () => {
     const next = ThemeEngine.cycle();
@@ -75,6 +129,8 @@ async function init() {
     ChatPanel.updateCfg(cfg);
     EasterEggs.updateCfg(cfg);
     Voice.update(cfg);
+    if (window.ActivityTracker) ActivityTracker.updateCfg(cfg);
+    if (window.WorkBuddy)       WorkBuddy.updateCfg(cfg);
     applyThemeAccent();
     applyGlow();
   });

@@ -51,6 +51,8 @@ const DEFAULTS = {
   voice_enabled:   false,
   auto_read_poems: false,
   easter_eggs:     true,
+  at_sessions:     [],   // ActivityTracker persisted sessions (last 7 days)
+  at_achievements: [],   // earned achievement ids
 };
 
 function loadSettings() {
@@ -211,6 +213,97 @@ ipcMain.handle('get-expression', async (_e, { mood, context, cfg }) => {
 ipcMain.handle('get-mood-now', () => {
   const hour = new Date().getHours();
   return getMood(hour);
+});
+
+// ── analyze-sentiment ─────────────────────────────────────────────────────────
+// Analyzes the emotional tone of a recent conversation exchange and returns
+// a face expression override for Aria to display.
+ipcMain.handle('analyze-sentiment', async (_e, { recentMessages, cfg }) => {
+  const name = cfg.assistant_name || 'Aria';
+  const convoSummary = (recentMessages || [])
+    .map(m => `${m.role === 'u' ? 'User' : name}: ${m.text}`)
+    .join('\n');
+  try {
+    const raw = await aiCall([
+      { role: 'system', content:
+          `You are ${name}'s emotion engine. Output ONLY valid JSON, no prose.`
+      },
+      { role: 'user', content:
+          `Given this conversation:\n${convoSummary}\n\n`
+        + `Return JSON: { "emotion": "happy|excited|focused|calm|empathetic|amused|concerned|curious|neutral", `
+        + `"intensity": 0.1-1.0, "expressionOverride": { `
+        + `"eyeShape": "normal|wide|squint|heart|star", `
+        + `"eyebrows": "none|raised|furrowed|wavy", `
+        + `"mouth": "smile|grin|neutral|smirk|o|tongue", `
+        + `"blush": true|false } }`
+      },
+    ], 120);
+    const m = raw.match(/\{[\s\S]*\}/);
+    if (m) return JSON.parse(m[0]);
+  } catch (e) { /* fallback */ }
+  return {
+    emotion: 'neutral',
+    intensity: 0.5,
+    expressionOverride: { eyeShape: 'normal', eyebrows: 'none', mouth: 'smile', blush: false },
+  };
+});
+
+// ── get-work-checkin ──────────────────────────────────────────────────────────
+// Generates a brief motivational check-in based on the user's session goal.
+ipcMain.handle('get-work-checkin', async (_e, { goal, elapsedMinutes, cfg }) => {
+  const name  = cfg.assistant_name || 'Aria';
+  const uname = (cfg.user_name || '').trim();
+  try {
+    const message = await aiCall([
+      { role: 'system', content:
+          `You are ${name}, a supportive work buddy. Max 12 words. Be warm and specific to the goal.`
+      },
+      { role: 'user', content:
+          `${uname ? `User: ${uname}. ` : ''}Goal: "${goal}". `
+        + `They've been working for ${elapsedMinutes} minutes. `
+        + `Give a brief (max 12 words) encouraging check-in. Reply ONLY with the message.`
+      },
+    ], 60);
+    return { message };
+  } catch (e) {
+    const fallbacks = [
+      "Keep going! You're making great progress!",
+      "Stay focused — the goal is in sight!",
+      "You've got this! Keep pushing! 💪",
+    ];
+    return { message: fallbacks[Math.floor(Math.random() * fallbacks.length)] };
+  }
+});
+
+// ── get-partner-profile ───────────────────────────────────────────────────────
+// Analyzes the user's work patterns and generates an ideal work-partner description.
+ipcMain.handle('get-partner-profile', async (_e, { workPatterns, cfg }) => {
+  const name  = cfg.assistant_name || 'Aria';
+  const uname = (cfg.user_name || '').trim();
+  const { avgSessionMinutes, sessionsToday, peakHours, workStyle } = workPatterns || {};
+  const patternSummary =
+    `avg session: ${avgSessionMinutes || 0}m, sessions today: ${sessionsToday || 0}, `
+    + `peak hours: ${(peakHours || []).join(', ') || 'unknown'}, style: ${workStyle || 'unknown'}`;
+  try {
+    const profile = await aiCall([
+      { role: 'system', content:
+          `You are ${name}, an insightful AI companion. Be warm, specific, and actionable. 3-4 sentences.`
+      },
+      { role: 'user', content:
+          `${uname ? `User: ${uname}. ` : ''}Work patterns: ${patternSummary}. `
+        + `Describe the ideal work partner for this person: personality, work style, and complementary skills. `
+        + `Be encouraging and specific.`
+      },
+    ], 200);
+    return { profile };
+  } catch (e) {
+    return {
+      profile: 'Your ideal partner brings steady energy to match your focus style — '
+             + 'reliable, communicative, and driven by the same goals. '
+             + 'They respect deep work time but are available for quick syncs. '
+             + 'Look for someone who brings complementary strengths and matches your dedication. 🤝',
+    };
+  }
 });
 
 ipcMain.handle('quit-app', () => app.quit());

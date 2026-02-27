@@ -3,9 +3,10 @@
  */
 'use strict';
 
-let _chatCfg         = {};
-let _history     = [];
-let _sending     = false;
+let _chatCfg          = {};
+let _history          = [];
+let _sending          = false;
+let _pendingFocusStart = false; // when true, next message becomes a Work Buddy goal
 
 const ChatPanel = {
   panel:   null,
@@ -30,13 +31,41 @@ const ChatPanel = {
     });
     this.send.addEventListener('click', () => this._sendMessage());
 
-    // Quick action buttons
+    // Quick action buttons (data-q preset messages)
     document.querySelectorAll('.quick-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         this.input.value = btn.dataset.q;
         this._sendMessage();
       });
     });
+
+    // Work Buddy: Start / End Focus session
+    const focusBtn = document.getElementById('btn-start-focus');
+    if (focusBtn) {
+      focusBtn.addEventListener('click', () => {
+        if (window.WorkBuddy && WorkBuddy.active) {
+          // End the current session
+          WorkBuddy.endSession();
+          focusBtn.textContent = '🎯 Focus';
+          return;
+        }
+        // Prompt user for a goal via the chat input
+        this.show();
+        this.input.value = '';
+        this.input.placeholder = 'What\'s your goal? (e.g. Finish the report)';
+        _pendingFocusStart = true;
+        this.input.focus();
+      });
+    }
+
+    // Work Buddy: Find My Work Partner
+    const partnerBtn = document.getElementById('btn-find-partner');
+    if (partnerBtn) {
+      partnerBtn.addEventListener('click', () => {
+        if (window.WorkBuddy) WorkBuddy.generatePartnerProfile();
+        else this.show();
+      });
+    }
   },
 
   updateCfg(cfg) {
@@ -72,13 +101,31 @@ const ChatPanel = {
     const text = this.input.value.trim();
     if (!text || _sending) return;
     this.input.value = '';
+
+    // ── Focus session goal intercept ────────────────────────────────────────
+    if (_pendingFocusStart) {
+      _pendingFocusStart = false;
+      // Reset placeholder
+      this.input.placeholder = `Ask ${(_chatCfg.assistant_name || 'Aria')} something…`;
+      this._addBubble('user', text);
+      const goal = text;
+      if (window.WorkBuddy) WorkBuddy.startSession(goal);
+      // Update Focus button label
+      const focusBtn = document.getElementById('btn-start-focus');
+      if (focusBtn) focusBtn.textContent = '⏹ End Focus';
+      this._addBubble('assistant',
+        `Session started! I'll check in every 20 minutes. Go get 'em! 🎯`);
+      return;
+    }
+
+    // ── Normal chat message ─────────────────────────────────────────────────
     _sending = true;
     this.send.disabled = true;
 
     this._addBubble('user', text);
     const thinkBubble = this._addBubble('assistant thinking', null, true);
 
-    // Show AI thinking expression on face
+    // Show AI "thinking" expression on face
     if (window.FaceCanvas) FaceCanvas.setExpression({ eyebrows: 'raised', mouth: 'o' });
 
     window.rClock.getChat({ message: text, cfg: _chatCfg }).then(({ reply, mood }) => {
@@ -87,21 +134,50 @@ const ChatPanel = {
       thinkBubble.remove();
       this._addBubble('assistant', reply);
 
+      // Record message for activity tracking
+      if (window.ActivityTracker) ActivityTracker.recordMessage();
+
       // Speak the reply if voice enabled
       if (window.Voice?.isEnabled()) {
         const theme = window.ThemeEngine?.current() || 'glassmorphism';
         Voice.speak(reply, theme);
       }
-      // Let face react
-      if (window.FaceCanvas) {
-        const reactions = ['wink', 'smile', 'grin'];
-        FaceCanvas.triggerReaction(reactions[Math.floor(Math.random() * reactions.length)]);
+
+      // ── AI-driven sentiment expression ─────────────────────────────────
+      const recentMessages = _history.slice(-4);
+      if (recentMessages.length >= 2 && window.rClock.analyzeSentiment) {
+        window.rClock.analyzeSentiment({ recentMessages, cfg: _chatCfg })
+          .then(result => {
+            if (!result) return;
+            if (window.FaceCanvas) {
+              FaceCanvas.setEmotion(result.emotion, result.intensity);
+              if (result.expressionOverride) {
+                FaceCanvas.setExpression(result.expressionOverride);
+              }
+            }
+          })
+          .catch(() => {
+            // Fall back to a random cheerful reaction
+            if (window.FaceCanvas) {
+              FaceCanvas.triggerReaction(
+                ['wink', 'star', 'tongue'][Math.floor(Math.random() * 3)]
+              );
+            }
+          });
+      } else {
+        // Not enough history yet — use a random reaction
+        if (window.FaceCanvas) {
+          FaceCanvas.triggerReaction(
+            ['wink', 'star', 'grin'][Math.floor(Math.random() * 3)]
+          );
+        }
       }
     }).catch(() => {
       _sending = false;
       this.send.disabled = false;
       thinkBubble.remove();
       this._addBubble('assistant', "Hmm, I couldn't reach my brain. 😅");
+      if (window.FaceCanvas) FaceCanvas.triggerReaction('surprised');
     });
   },
 
