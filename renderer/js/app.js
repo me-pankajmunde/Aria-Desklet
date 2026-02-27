@@ -203,6 +203,49 @@ async function init() {
   flashGreeting();
 
   applyGlow();
+
+  // ── Startup greeting speech bubble ────────────────────────────────────────
+  // Aria says hello 1.8 seconds after launch — feels alive from the start
+  setTimeout(() => _showStartupGreeting(), 1800);
+}
+
+function _showStartupGreeting() {
+  const h     = new Date().getHours();
+  const uname = (cfg.user_name || '').trim();
+  const greetings = {
+    morning:   ['Rise and shine! Ready to make today amazing? ☀️', 'Good morning! Let\'s crush it today! 🚀', 'Morning! I\'ve been waiting for you ✨'],
+    afternoon: ['Good afternoon! Still going strong? 💪', 'Hey there! Time to stay focused 🎯', 'Afternoon check-in: you\'re doing great! ⚡'],
+    evening:   ['Evening! Winding down or pushing through? 🌙', 'Good evening! Great work today 🌟', 'Hey! Hope your day was productive 😊'],
+    night:     ['Late night hustle! I\'m here with you 🦉', 'Burning the midnight oil? You\'ve got this ✨', 'Still here, still cheering you on! 🌙'],
+  };
+  const period =
+    h >= 5  && h < 12 ? 'morning'   :
+    h >= 12 && h < 17 ? 'afternoon' :
+    h >= 17 && h < 21 ? 'evening'   : 'night';
+
+  const pool   = greetings[period];
+  let msg      = pool[Math.floor(Math.random() * pool.length)];
+  if (uname) msg = msg.replace(/^(Hey|Good \w+|Rise|Morning|Afternoon|Evening|Still|Late|Burning)/, `$1, ${uname}`);
+
+  const bubble = document.getElementById('speech-bubble');
+  const textEl = document.getElementById('speech-text');
+  if (!bubble || !textEl) return;
+
+  textEl.textContent = msg;
+  bubble.classList.remove('opacity-0');
+  bubble.classList.add('opacity-100');
+
+  // Warm expression for greeting
+  if (window.FaceCanvas) {
+    FaceCanvas.setSoftExpression({ mouth: 'grin', blush: true });
+  }
+
+  // Auto-hide after 5 seconds, then revert face
+  setTimeout(() => {
+    bubble.classList.remove('opacity-100');
+    bubble.classList.add('opacity-0');
+    if (window.FaceCanvas) FaceCanvas.setMood(currentMood);
+  }, 5000);
 }
 
 // ── Clock tick ─────────────────────────────────────────────────────────────────
@@ -236,8 +279,10 @@ async function tick() {
     flashGreeting(h);
 
     // Fetch mood-based expression from AI (async, non-blocking)
+    // Use setSoftExpression — only mouth/blush, NO eyebrows from hourly calls
+    // (eyebrows are reserved for reactions and conversation sentiment)
     window.rClock.getExpression({ mood, context: `It is ${timeStr}`, cfg }).then(expr => {
-      FaceCanvas.setExpression(expr);
+      FaceCanvas.setSoftExpression(expr);
       if (cfg.particles !== false && expr.particles && expr.particles !== 'none') {
         ParticleEngine.setType(expr.particles, {
           count: Math.round(30 * (expr.intensity || 0.5)),
