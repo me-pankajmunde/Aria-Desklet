@@ -105,7 +105,7 @@
     #chat-panel.hidden {
       transform: translateY(100%);
     }
-    
+
     /* Settings Panel Slide-in */
     #settings-panel {
       transition: transform 0.3s ease-in-out;
@@ -113,6 +113,28 @@
     #settings-panel.hidden {
       transform: translateX(100%);
     }
+
+    /* Aria Speech Zone (slides down from top) */
+    #aria-speech-zone {
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Quote Popup */
+    #quote-popup {
+      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+
+    /* Quote Drawer */
+    #quote-drawer {
+      transition: transform 0.3s ease-in-out;
+    }
+
+    /* Streaming cursor blink */
+    @keyframes stream-cursor {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+    .stream-cursor { animation: stream-cursor 0.8s ease-in-out infinite; }
   </style>
 </head>
 <body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans selection:bg-primary selection:text-background-dark overflow-hidden relative transition-colors duration-300 dark">
@@ -176,9 +198,9 @@
       </div>
     </div>
 
-    <!-- Middle: Poem & Clock -->
+    <!-- Middle: Clock & Quote Preview -->
     <div class="flex flex-col items-center justify-center w-2/4 h-full">
-      <div class="w-full glass-panel rounded-2xl p-3 relative overflow-hidden transition-all duration-300 hover:bg-opacity-10 hover:border-primary/30 flex flex-col justify-center h-full">
+      <div class="w-full glass-panel rounded-2xl p-3 relative overflow-hidden transition-all duration-300 hover:border-primary/30 flex flex-col justify-center h-full">
         <div class="absolute top-1 left-2 text-3xl font-serif text-primary opacity-20 select-none">"</div>
         <!-- Work Buddy session badge -->
         <div id="work-buddy-badge" class="hidden relative z-10 flex items-center space-x-1 mb-1">
@@ -186,21 +208,15 @@
           <span class="text-[9px] text-primary font-semibold uppercase tracking-widest">FOCUS</span>
           <span id="buddy-elapsed" class="text-[9px] text-primary font-mono ml-0.5">0m</span>
         </div>
-        <div class="relative z-10 flex flex-col space-y-1">
-          <p id="poem-text" class="text-sm md:text-base font-light leading-snug text-slate-700 dark:text-slate-100 tracking-wide text-center line-clamp-3">
-            Initialising…
+        <div class="relative z-10 flex flex-col items-center justify-center space-y-0.5">
+          <!-- Clock (prominent) -->
+          <span id="clock-display" class="text-primary font-mono text-2xl tracking-wider font-bold leading-none">--:--</span>
+          <!-- Current mood label -->
+          <span id="mood-label" class="text-[8px] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">ready</span>
+          <!-- Last motivation quote preview (dim) -->
+          <p id="poem-text" class="text-[9px] text-slate-500 dark:text-slate-400 text-center italic leading-snug line-clamp-2 px-1 mt-1 opacity-60 max-w-full">
+            Waiting for inspiration…
           </p>
-          <div class="flex items-center justify-center space-x-3 pt-1">
-            <div class="flex items-center space-x-1">
-              <span class="material-icons-round text-primary text-xs">schedule</span>
-              <span id="clock-display" class="text-primary font-mono text-xs tracking-wider">--:--</span>
-            </div>
-            <span class="text-slate-400 dark:text-slate-600 text-xs">•</span>
-            <div class="flex items-center space-x-1">
-              <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-              <span class="text-[10px] text-slate-500 dark:text-slate-400 font-medium">ON TRACK</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>
@@ -241,6 +257,58 @@
       </div>
     </div>
   </div>
+
+  <!-- Aria Speech Zone (slides down from top when streaming) -->
+  <div id="aria-speech-zone"
+    class="fixed top-0 left-0 right-0 z-[55] bg-slate-950/95 backdrop-blur-sm
+           border-b border-primary/30 px-3 py-2
+           transform -translate-y-full pointer-events-none">
+    <div class="flex items-start space-x-2 max-w-full">
+      <span class="text-primary text-sm mt-0.5 flex-shrink-0 animate-pulse">◆</span>
+      <p id="aria-speech-text"
+         class="text-xs text-slate-100 leading-snug flex-1 line-clamp-3 min-h-[1rem]"></p>
+      <span id="aria-speech-cursor"
+            class="stream-cursor w-0.5 h-3 bg-primary flex-shrink-0 mt-1 opacity-0"></span>
+    </div>
+  </div>
+
+  <!-- Quote Popup (appears center-screen for 2 seconds on new quote) -->
+  <div id="quote-popup"
+    class="fixed inset-0 z-[52] flex items-center justify-center pointer-events-none
+           opacity-0 scale-95">
+    <div class="bg-slate-950/97 backdrop-blur-md border border-primary/40
+                rounded-2xl px-5 py-3 shadow-2xl max-w-[280px]">
+      <div class="flex items-start space-x-2">
+        <span class="text-primary text-base flex-shrink-0">✨</span>
+        <p id="quote-popup-text"
+           class="text-xs text-slate-100 italic leading-relaxed flex-1"></p>
+      </div>
+      <p class="text-[8px] text-primary/60 text-right mt-1.5 font-semibold tracking-wide">— Aria</p>
+    </div>
+  </div>
+
+  <!-- Quote Drawer (slides in from left edge) -->
+  <div id="quote-drawer"
+    class="fixed inset-y-0 left-0 w-44 bg-slate-950/98 border-r border-primary/20
+           z-[48] transform -translate-x-full flex flex-col overflow-hidden">
+    <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700/60 flex-shrink-0">
+      <span class="text-[10px] font-bold text-white tracking-wider uppercase">✨ Quotes</span>
+      <button id="drawer-close"
+        class="text-slate-500 hover:text-white no-drag transition-colors text-sm leading-none">✕</button>
+    </div>
+    <div id="quote-drawer-list" class="flex-1 overflow-y-auto p-2 space-y-2">
+      <p class="text-[10px] text-slate-500 text-center mt-4 italic">No quotes yet…<br/>Check back in 30 min!</p>
+    </div>
+  </div>
+
+  <!-- Drawer toggle tab (left edge) -->
+  <button id="drawer-toggle"
+    class="fixed left-0 top-1/2 -translate-y-1/2 z-[47] no-drag
+           bg-slate-800/80 hover:bg-primary/20 border border-l-0 border-primary/25
+           rounded-r-md w-4 h-10 flex items-center justify-center
+           transition-colors cursor-pointer">
+    <span class="text-primary text-[11px] leading-none">❝</span>
+  </button>
 
   <!-- Chat panel (slides up) -->
   <div id="chat-panel" class="fixed inset-x-0 bottom-0 h-2/3 bg-surface-light dark:bg-surface-dark rounded-t-3xl shadow-2xl z-50 flex flex-col translate-y-full border-t border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out">

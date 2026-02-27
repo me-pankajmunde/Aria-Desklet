@@ -1,12 +1,12 @@
 /**
- * Chat Panel — slide-up chat UI with history, quick actions, and typing indicator
+ * Chat Panel — slide-up chat UI with streaming AI responses shown on Aria's face
  */
 'use strict';
 
-let _chatCfg          = {};
-let _history          = [];
-let _sending          = false;
-let _pendingFocusStart = false; // when true, next message becomes a Work Buddy goal
+let _chatCfg           = {};
+let _history           = [];
+let _sending           = false;
+let _pendingFocusStart = false; // next message becomes a Work Buddy goal
 
 const ChatPanel = {
   panel:   null,
@@ -15,6 +15,7 @@ const ChatPanel = {
   input:   null,
   send:    null,
 
+  // ── Init ──────────────────────────────────────────────────────────────────
   init() {
     this.panel   = document.getElementById('chat-panel');
     this.title   = document.getElementById('chat-title');
@@ -44,15 +45,13 @@ const ChatPanel = {
     if (focusBtn) {
       focusBtn.addEventListener('click', () => {
         if (window.WorkBuddy && WorkBuddy.active) {
-          // End the current session
           WorkBuddy.endSession();
           focusBtn.textContent = '🎯 Focus';
           return;
         }
-        // Prompt user for a goal via the chat input
         this.show();
         this.input.value = '';
-        this.input.placeholder = 'What\'s your goal? (e.g. Finish the report)';
+        this.input.placeholder = "What's your goal? (e.g. Finish the report)";
         _pendingFocusStart = true;
         this.input.focus();
       });
@@ -90,13 +89,11 @@ const ChatPanel = {
 
   toggle() {
     if (!this.panel) return;
-    if (this.panel.classList.contains('translate-y-full')) {
-      this.show();
-    } else {
-      this.hide();
-    }
+    if (this.panel.classList.contains('translate-y-full')) this.show();
+    else this.hide();
   },
 
+  // ── Send message (streaming) ──────────────────────────────────────────────
   _sendMessage() {
     const text = this.input.value.trim();
     if (!text || _sending) return;
@@ -105,45 +102,76 @@ const ChatPanel = {
     // ── Focus session goal intercept ────────────────────────────────────────
     if (_pendingFocusStart) {
       _pendingFocusStart = false;
-      // Reset placeholder
       this.input.placeholder = `Ask ${(_chatCfg.assistant_name || 'Aria')} something…`;
       this._addBubble('user', text);
-      const goal = text;
-      if (window.WorkBuddy) WorkBuddy.startSession(goal);
-      // Update Focus button label
+      if (window.WorkBuddy) WorkBuddy.startSession(text);
       const focusBtn = document.getElementById('btn-start-focus');
       if (focusBtn) focusBtn.textContent = '⏹ End Focus';
-      this._addBubble('assistant',
-        `Session started! I'll check in every 20 minutes. Go get 'em! 🎯`);
+      this._addBubble('assistant', "Session started! I'll check in every 20 minutes. Go get 'em! 🎯");
       return;
     }
 
-    // ── Normal chat message ─────────────────────────────────────────────────
+    // ── Normal chat — stream response ───────────────────────────────────────
     _sending = true;
     this.send.disabled = true;
 
     this._addBubble('user', text);
     const thinkBubble = this._addBubble('assistant thinking', null, true);
-
-    // Show AI "thinking" expression on face
     if (window.FaceCanvas) FaceCanvas.setExpression({ eyebrows: 'raised', mouth: 'o' });
 
-    window.rClock.getChat({ message: text, cfg: _chatCfg }).then(({ reply, mood }) => {
+    let fullReply   = '';
+    let streamEntry = null; // { wrapper, bubble }
+    let streamStarted = false;
+
+    // Clean up any leftover listeners from a previous interrupted stream
+    window.rClock.removeChatStreamListeners();
+
+    // ── Stream start acknowledged ──
+    window.rClock.onChatStart((data) => {
+      streamStarted = true;
+      thinkBubble.remove();
+      streamEntry = this._addStreamBubble();
+      this._showSpeakZone();
+      // Show streaming cursor
+      const cursor = document.getElementById('aria-speech-cursor');
+      if (cursor) cursor.style.opacity = '1';
+    });
+
+    // ── Token received ──
+    window.rClock.onChatToken((token) => {
+      fullReply += token;
+      if (streamEntry) this._updateStreamBubble(streamEntry, fullReply);
+      this._updateSpeakZone(fullReply);
+    });
+
+    // ── Stream complete ──
+    window.rClock.onChatDone(() => {
       _sending = false;
       this.send.disabled = false;
-      thinkBubble.remove();
-      this._addBubble('assistant', reply);
+      window.rClock.removeChatStreamListeners();
 
-      // Record message for activity tracking
-      if (window.ActivityTracker) ActivityTracker.recordMessage();
+      // Hide streaming cursor
+      const cursor = document.getElementById('aria-speech-cursor');
+      if (cursor) cursor.style.opacity = '0';
 
-      // Speak the reply if voice enabled
-      if (window.Voice?.isEnabled()) {
-        const theme = window.ThemeEngine?.current() || 'glassmorphism';
-        Voice.speak(reply, theme);
+      // Commit reply to history (skip re-push if nothing came through)
+      if (fullReply) {
+        _history.push({ role: 'a', text: fullReply });
+        if (_history.length > 20) _history.shift();
       }
 
-      // ── AI-driven sentiment expression ─────────────────────────────────
+      // Voice read
+      if (window.Voice?.isEnabled()) {
+        Voice.speak(fullReply, window.ThemeEngine?.current() || 'glassmorphism');
+      }
+
+      // Activity tracking
+      if (window.ActivityTracker) ActivityTracker.recordMessage();
+
+      // Schedule hiding the speak zone after 4 s
+      this._scheduleHideSpeakZone();
+
+      // AI-driven sentiment expression (async, non-blocking)
       const recentMessages = _history.slice(-4);
       if (recentMessages.length >= 2 && window.rClock.analyzeSentiment) {
         window.rClock.analyzeSentiment({ recentMessages, cfg: _chatCfg })
@@ -151,83 +179,143 @@ const ChatPanel = {
             if (!result) return;
             if (window.FaceCanvas) {
               FaceCanvas.setEmotion(result.emotion, result.intensity);
-              if (result.expressionOverride) {
-                FaceCanvas.setExpression(result.expressionOverride);
-              }
+              if (result.expressionOverride) FaceCanvas.setExpression(result.expressionOverride);
             }
           })
           .catch(() => {
-            // Fall back to a random cheerful reaction
             if (window.FaceCanvas) {
-              FaceCanvas.triggerReaction(
-                ['wink', 'star', 'tongue'][Math.floor(Math.random() * 3)]
-              );
+              FaceCanvas.triggerReaction(['wink', 'star', 'tongue'][Math.floor(Math.random() * 3)]);
             }
           });
       } else {
-        // Not enough history yet — use a random reaction
         if (window.FaceCanvas) {
-          FaceCanvas.triggerReaction(
-            ['wink', 'star', 'grin'][Math.floor(Math.random() * 3)]
-          );
+          FaceCanvas.triggerReaction(['wink', 'star', 'grin'][Math.floor(Math.random() * 3)]);
         }
       }
-    }).catch(() => {
-      _sending = false;
-      this.send.disabled = false;
-      thinkBubble.remove();
-      this._addBubble('assistant', "Hmm, I couldn't reach my brain. 😅");
-      if (window.FaceCanvas) FaceCanvas.triggerReaction('surprised');
     });
+
+    // ── Stream error — fall back to non-streaming ──
+    window.rClock.onChatError((error) => {
+      window.rClock.removeChatStreamListeners();
+      const cursor = document.getElementById('aria-speech-cursor');
+      if (cursor) cursor.style.opacity = '0';
+      this._hideSpeakZone();
+
+      // Remove any partial stream bubble
+      if (streamEntry) { streamEntry.wrapper.remove(); streamEntry = null; }
+      if (!streamStarted) thinkBubble.remove();
+
+      // Try non-streaming fallback
+      window.rClock.getChat({ message: text, cfg: _chatCfg })
+        .then(({ reply }) => {
+          _sending = false;
+          this.send.disabled = false;
+          this._addBubble('assistant', reply);
+          if (window.FaceCanvas) FaceCanvas.triggerReaction('wink');
+        })
+        .catch(() => {
+          _sending = false;
+          this.send.disabled = false;
+          this._addBubble('assistant', "Hmm, I couldn't reach my brain. 😅");
+          if (window.FaceCanvas) FaceCanvas.triggerReaction('surprised');
+        });
+    });
+
+    // Fire the stream request
+    window.rClock.startChatStream({ message: text, cfg: _chatCfg });
   },
 
+  // ── Bubble helpers ────────────────────────────────────────────────────────
   _addBubble(role, text, isThinking = false) {
     const bubble = document.createElement('div');
-    
-    // Tailwind styling for bubbles
-    const baseClasses = "max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm";
-    const userClasses = "bg-primary text-black self-end rounded-br-sm";
-    const aiClasses = "bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 self-start rounded-bl-sm";
-    
-    bubble.className = `${baseClasses} ${role === 'user' ? userClasses : aiClasses}`;
+    const base   = 'max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm';
+    const user   = 'bg-primary text-black self-end rounded-br-sm';
+    const ai     = 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 self-start rounded-bl-sm';
+
+    bubble.className = `${base} ${role === 'user' ? user : ai}`;
 
     if (isThinking) {
       bubble.innerHTML = `<div class="flex space-x-1 items-center h-5">
         <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
-        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
-        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.1s"></div>
+        <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay:0.2s"></div>
       </div>`;
     } else {
       bubble.textContent = text;
-      _history.push({ role: role.replace('assistant', 'a').replace('user', 'u'), text });
-      if (_history.length > 20) _history.shift();
-      
-      // Also show short replies in the speech bubble
-      if (role === 'assistant' && text.length < 50) {
-        const speechBubble = document.getElementById('speech-bubble');
-        const speechText = document.getElementById('speech-text');
-        if (speechBubble && speechText) {
-          speechText.textContent = text;
-          speechBubble.classList.remove('opacity-0');
-          speechBubble.classList.add('opacity-100');
-          
+      if (role !== 'user') {
+        _history.push({ role: role.replace('assistant', 'a'), text });
+        if (_history.length > 20) _history.shift();
+      }
+
+      // Short non-stream assistant replies also show in speech bubble
+      if (role === 'assistant' && text.length < 60) {
+        const sb = document.getElementById('speech-bubble');
+        const st = document.getElementById('speech-text');
+        if (sb && st) {
+          st.textContent = text;
+          sb.classList.remove('opacity-0');
+          sb.classList.add('opacity-100');
           clearTimeout(this._speechTimeout);
           this._speechTimeout = setTimeout(() => {
-            speechBubble.classList.remove('opacity-100');
-            speechBubble.classList.add('opacity-0');
+            sb.classList.remove('opacity-100');
+            sb.classList.add('opacity-0');
           }, 4000);
         }
       }
     }
 
-    // Wrap in a flex container to align left/right
     const wrapper = document.createElement('div');
     wrapper.className = `flex w-full ${role === 'user' ? 'justify-end' : 'justify-start'}`;
     wrapper.appendChild(bubble);
-
     this.history.appendChild(wrapper);
     this.history.scrollTop = this.history.scrollHeight;
     return wrapper;
+  },
+
+  // Returns { wrapper, bubble } for a streaming response bubble
+  _addStreamBubble() {
+    const bubble = document.createElement('div');
+    bubble.className = 'max-w-[80%] rounded-2xl px-4 py-2 text-sm shadow-sm bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 self-start rounded-bl-sm min-h-[2rem]';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'flex w-full justify-start';
+    wrapper.appendChild(bubble);
+    this.history.appendChild(wrapper);
+    this.history.scrollTop = this.history.scrollHeight;
+    return { wrapper, bubble };
+  },
+
+  _updateStreamBubble({ bubble }, text) {
+    bubble.textContent = text;
+    this.history.scrollTop = this.history.scrollHeight;
+  },
+
+  // ── Aria Speak Zone (slides down from top of window) ──────────────────────
+  _showSpeakZone() {
+    const zone   = document.getElementById('aria-speech-zone');
+    const textEl = document.getElementById('aria-speech-text');
+    if (!zone) return;
+    if (textEl) textEl.textContent = '';
+    zone.classList.remove('-translate-y-full');
+    zone.classList.add('translate-y-0');
+    clearTimeout(this._speakZoneTimer);
+  },
+
+  _updateSpeakZone(text) {
+    const textEl = document.getElementById('aria-speech-text');
+    if (textEl) textEl.textContent = text;
+  },
+
+  _hideSpeakZone() {
+    const zone = document.getElementById('aria-speech-zone');
+    if (!zone) return;
+    zone.classList.remove('translate-y-0');
+    zone.classList.add('-translate-y-full');
+  },
+
+  _scheduleHideSpeakZone(ms = 4000) {
+    clearTimeout(this._speakZoneTimer);
+    this._speakZoneTimer = setTimeout(() => this._hideSpeakZone(), ms);
   },
 };
 

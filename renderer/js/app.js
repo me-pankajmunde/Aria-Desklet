@@ -9,6 +9,9 @@ let currentMin   = -1;
 let currentHour  = -1;
 let currentMood  = 'happy';
 
+// ── Quote store ────────────────────────────────────────────────────────────────
+const _storedQuotes = [];
+
 // ── Init ──────────────────────────────────────────────────────────────────────
 async function init() {
   console.log('[app] init() called — readyState:', document.readyState);
@@ -120,7 +123,10 @@ async function init() {
 
   // Tray / IPC events
   window.rClock.on('open-chat',     () => ChatPanel.show());
-  window.rClock.on('refresh-poem',  () => { currentMin = -1; });
+  window.rClock.on('refresh-poem',  () => {
+    const now = new Date();
+    fetchQuote(formatTime(now), now.getMinutes(), true);
+  });
   window.rClock.on('open-settings', () => SettingsPanel.show());
 
   // Settings live-update
@@ -140,6 +146,21 @@ async function init() {
     const accent = ThemeEngine.getAccent(theme);
     FaceCanvas.setColor(accent);
     applyDefaultParticlesForMood(currentMood, theme);
+  });
+
+  // Quote drawer toggle
+  document.getElementById('drawer-toggle')?.addEventListener('click', () => _toggleQuoteDrawer());
+  document.getElementById('drawer-close')?.addEventListener('click',  () => _toggleQuoteDrawer(false));
+  // Close drawer on outside click
+  document.addEventListener('click', (e) => {
+    const drawer  = document.getElementById('quote-drawer');
+    const toggle  = document.getElementById('drawer-toggle');
+    if (!drawer || !toggle) return;
+    if (!drawer.classList.contains('-translate-x-full')) {
+      if (!drawer.contains(e.target) && !toggle.contains(e.target)) {
+        _toggleQuoteDrawer(false);
+      }
+    }
   });
 
   // Settings button
@@ -207,6 +228,12 @@ async function init() {
   // ── Startup greeting speech bubble ────────────────────────────────────────
   // Aria says hello 1.8 seconds after launch — feels alive from the start
   setTimeout(() => _showStartupGreeting(), 1800);
+
+  // Fetch an initial motivation quote shortly after launch (force = true)
+  setTimeout(() => {
+    const now = new Date();
+    fetchQuote(formatTime(now), now.getMinutes(), true);
+  }, 4000);
 }
 
 function _showStartupGreeting() {
@@ -276,6 +303,10 @@ async function tick() {
       applyDefaultParticlesForMood(mood, ThemeEngine.current());
     }
 
+    // Update mood label in middle panel
+    const moodEl = document.getElementById('mood-label');
+    if (moodEl) moodEl.textContent = mood;
+
     flashGreeting(h);
 
     // Fetch mood-based expression from AI (async, non-blocking)
@@ -292,19 +323,17 @@ async function tick() {
     });
   }
 
-  // Minute change
+  // Minute change — fetch quotes only at :00 and :30
   if (m !== currentMin) {
     currentMin = m;
-    fetchPoem(timeStr, m);
+    if (m === 0 || m === 30) {
+      fetchQuote(timeStr, m);
+    }
   }
 }
 
-// ── Poem / Tip fetch ───────────────────────────────────────────────────────────
-async function fetchPoem(timeStr, minute) {
-  const poemEl = document.getElementById('poem-text');
-  poemEl.classList.add('loading');
-  poemEl.textContent = '…';
-
+// ── Quote / Tip fetch (every 30 min or forced) ─────────────────────────────────
+async function fetchQuote(timeStr, minute, force = false) {
   try {
     let text, mood;
     if (minute === 0 && cfg.hourly_tips !== false) {
@@ -315,13 +344,20 @@ async function fetchPoem(timeStr, minute) {
       text = r.poem; mood = r.mood;
     }
 
-    // Animate poem in
-    poemEl.classList.remove('loading');
-    poemEl.style.opacity = '0';
-    poemEl.textContent   = text;
-    console.log('[poem] rendered:', text.substring(0, 60));
-    poemEl.style.transition = 'opacity 0.5s ease';
-    requestAnimationFrame(() => { poemEl.style.opacity = '1'; });
+    // Update the dim preview in the middle panel
+    const poemEl = document.getElementById('poem-text');
+    if (poemEl) {
+      poemEl.style.opacity = '0';
+      poemEl.textContent   = text;
+      poemEl.style.transition = 'opacity 0.5s ease';
+      requestAnimationFrame(() => { poemEl.style.opacity = '0.6'; });
+    }
+
+    // Store and show popup
+    _storeQuote(text);
+    _showQuotePopup(text);
+
+    console.log('[quote]', text.substring(0, 60));
 
     // Auto-read if enabled
     Voice.autoReadPoem(text, ThemeEngine.current());
@@ -333,8 +369,68 @@ async function fetchPoem(timeStr, minute) {
       FaceCanvas.triggerReaction('star');
     }
   } catch (e) {
-    poemEl.classList.remove('loading');
-    poemEl.textContent = `The clock reads ${timeStr},\nand silence fills the air.`;
+    console.warn('[quote] fetch failed:', e);
+  }
+}
+
+// ── Quote popup (shows for ~2 seconds then fades) ─────────────────────────────
+function _showQuotePopup(text) {
+  const popup  = document.getElementById('quote-popup');
+  const textEl = document.getElementById('quote-popup-text');
+  if (!popup || !textEl) return;
+
+  textEl.textContent = text;
+  // Show: opacity-100 + scale-100
+  popup.style.opacity   = '1';
+  popup.style.transform = 'scale(1)';
+
+  clearTimeout(window._quotePopupTimer);
+  window._quotePopupTimer = setTimeout(() => {
+    popup.style.opacity   = '0';
+    popup.style.transform = 'scale(0.95)';
+  }, 2000);
+}
+
+// ── Quote store & drawer ───────────────────────────────────────────────────────
+function _storeQuote(text) {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  _storedQuotes.unshift({ text, time });
+  if (_storedQuotes.length > 10) _storedQuotes.pop();
+  // Refresh drawer if it's open
+  const drawer = document.getElementById('quote-drawer');
+  if (drawer && !drawer.classList.contains('-translate-x-full')) {
+    _renderQuoteDrawer();
+  }
+}
+
+function _renderQuoteDrawer() {
+  const list = document.getElementById('quote-drawer-list');
+  if (!list) return;
+
+  if (_storedQuotes.length === 0) {
+    list.innerHTML = '<p class="text-[10px] text-slate-500 text-center mt-4 italic">No quotes yet…<br/>Check back in 30 min!</p>';
+    return;
+  }
+
+  list.innerHTML = _storedQuotes.map(q => `
+    <div class="p-2 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-primary/20 transition-colors">
+      <p class="text-[9px] text-slate-300 italic leading-snug">"${q.text}"</p>
+      <p class="text-[8px] text-primary/50 mt-1 text-right">${q.time}</p>
+    </div>
+  `).join('');
+}
+
+function _toggleQuoteDrawer(open) {
+  const drawer = document.getElementById('quote-drawer');
+  if (!drawer) return;
+  const isOpen = !drawer.classList.contains('-translate-x-full');
+  const shouldOpen = open !== undefined ? open : !isOpen;
+
+  if (shouldOpen) {
+    drawer.classList.remove('-translate-x-full');
+    _renderQuoteDrawer();
+  } else {
+    drawer.classList.add('-translate-x-full');
   }
 }
 
