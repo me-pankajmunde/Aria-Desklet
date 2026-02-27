@@ -22,6 +22,17 @@ contextBridge.exposeInMainWorld('rClock', {
   getWorkCheckin:   (payload)   => ipcRenderer.invoke('get-work-checkin', payload),
   getPartnerProfile:(payload)   => ipcRenderer.invoke('get-partner-profile', payload),
 
+  // Streaming chat — main sends multiple token events back
+  startChatStream: (payload) => ipcRenderer.send('chat-stream-start', payload),
+  onChatStart:  (cb) => ipcRenderer.on('chat-stream-start-ack', (_e, d) => cb(d)),
+  onChatToken:  (cb) => ipcRenderer.on('chat-stream-token',     (_e, d) => cb(d.token)),
+  onChatDone:   (cb) => ipcRenderer.on('chat-stream-done',      (_e)    => cb()),
+  onChatError:  (cb) => ipcRenderer.on('chat-stream-error',     (_e, d) => cb(d.error)),
+  removeChatStreamListeners: () => {
+    ['chat-stream-start-ack', 'chat-stream-token', 'chat-stream-done', 'chat-stream-error']
+      .forEach(ch => ipcRenderer.removeAllListeners(ch));
+  },
+
   // App control
   quit:           ()            => ipcRenderer.invoke('quit-app'),
   openDevtools:   ()            => ipcRenderer.invoke('open-devtools'),

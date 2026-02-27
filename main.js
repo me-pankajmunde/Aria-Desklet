@@ -124,19 +124,26 @@ ipcMain.handle('get-poem', async (_e, { timeStr, cfg }) => {
   try {
     const poem = await aiCall([
       { role: 'system', content:
-          `You are ${name}, a charming and witty AI desktop companion. `
+          `You are ${name}, a warm and inspiring AI desktop companion. `
         + `Current mood: ${mood.name}. Style: ${mood.hint} `
         + `It is ${period}.${addr}`
       },
       { role: 'user', content:
-          `Write a short (2-4 lines) minimalist rhyming poem about the time ${timeStr}. `
-        + `Focus on the numbers. Be elegant. `
-        + `Reply with ONLY the poem, no title or extra text.`
+          `Write a very short (1-2 lines) original motivational quote or uplifting affirmation `
+        + `that fits this ${period} vibe. Be genuine, energizing, and memorable. `
+        + `Reply with ONLY the quote — no title, no attribution, no quotation marks, no extra text.`
       },
-    ], 130);
+    ], 80);
     return { poem, mood: mood.name };
   } catch (e) {
-    return { poem: `The clock reads ${timeStr},\nand silence fills the air.`, mood: mood.name };
+    const fallbacks = [
+      'Every moment is a fresh beginning. ✨',
+      "You're doing better than you think. 💪",
+      'Small steps, big dreams. Keep going! 🚀',
+      'Your focus is your superpower. 🎯',
+      'Progress, not perfection. You\'ve got this!',
+    ];
+    return { poem: fallbacks[Math.floor(Math.random() * fallbacks.length)], mood: mood.name };
   }
 });
 
@@ -303,6 +310,91 @@ ipcMain.handle('get-partner-profile', async (_e, { workPatterns, cfg }) => {
              + 'They respect deep work time but are available for quick syncs. '
              + 'Look for someone who brings complementary strengths and matches your dedication. 🤝',
     };
+  }
+});
+
+// ── chat-stream-start ─────────────────────────────────────────────────────────
+// Streams chat response tokens back to the renderer via multiple IPC events.
+// Uses ipcMain.on (not handle) so we can send multiple replies.
+ipcMain.on('chat-stream-start', async (event, { message, cfg }) => {
+  const hour  = new Date().getHours();
+  const mood  = getMood(hour);
+  const name  = cfg.assistant_name || 'Aria';
+  const uname = (cfg.user_name || '').trim();
+  const addr  = uname ? ` The user's name is ${uname}.` : '';
+
+  const send = (ch, data) => {
+    if (!event.sender.isDestroyed()) event.sender.send(ch, data);
+  };
+
+  try {
+    const resp = await fetch(`${AI_ENDPOINT}/chat/completions`, {
+      method:  'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': `Bearer ${AI_TOKEN}`,
+      },
+      body: JSON.stringify({
+        model: AI_MODEL,
+        max_tokens: 200,
+        stream: true,
+        messages: [
+          { role: 'system', content:
+              `You are ${name}, a helpful, charming desktop AI companion. `
+            + `Mood: ${mood.name}. Style: ${mood.hint}${addr} `
+            + `Keep your answers concise (1-3 sentences), warm and witty.`
+          },
+          { role: 'user', content: message },
+        ],
+      }),
+    });
+
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+    // Acknowledge stream start
+    send('chat-stream-start-ack', { mood: mood.name });
+
+    // If no body (non-streaming response), treat entire JSON as single token
+    if (!resp.body) {
+      const data = await resp.json();
+      const token = data.choices?.[0]?.message?.content?.trim() || '';
+      send('chat-stream-token', { token });
+      send('chat-stream-done', {});
+      return;
+    }
+
+    // Read SSE stream
+    const reader  = resp.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // keep trailing incomplete line
+
+      for (const line of lines) {
+        const trimmed = line.trim();
+        if (!trimmed.startsWith('data:')) continue;
+        const payload = trimmed.slice(5).trim();
+        if (payload === '[DONE]') {
+          send('chat-stream-done', {});
+          return;
+        }
+        try {
+          const parsed = JSON.parse(payload);
+          const token  = parsed.choices?.[0]?.delta?.content;
+          if (token) send('chat-stream-token', { token });
+        } catch { /* ignore malformed SSE chunks */ }
+      }
+    }
+
+    send('chat-stream-done', {});
+  } catch (e) {
+    send('chat-stream-error', { error: e.message });
   }
 });
 

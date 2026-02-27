@@ -1,7 +1,7 @@
 /**
  * Face SVG — animated companion face using SVG elements
  * Supports: moods, AI-driven expressions (eyebrows, mouth, blush),
- *           emotion dot, cursor tracking, bounce reactions.
+ *           emotion dot, cursor tracking, bounce reactions, idle animations.
  */
 'use strict';
 
@@ -15,11 +15,11 @@ const MOUTH_PATHS = {
   tongue:  'M75 85 Q 100 97, 125 85',
 };
 
-// Mood-based default mouth paths
+// Mood-based default mouth — all friendly and warm
 const MOOD_MOUTH = {
-  sleepy:  MOUTH_PATHS.smirk,
-  happy:   MOUTH_PATHS.grin,
-  focused: MOUTH_PATHS.smirk,
+  sleepy:  MOUTH_PATHS.neutral,   // resting/sleepy, not a cold smirk
+  happy:   MOUTH_PATHS.grin,      // big happy
+  focused: MOUTH_PATHS.smile,     // gentle smile even when focused
   relaxed: MOUTH_PATHS.smile,
   chill:   MOUTH_PATHS.smile,
 };
@@ -50,6 +50,8 @@ let _themeColor      = '#00FF94';
 let _currentEmotion  = 'neutral';
 let _reactionTimer   = null;
 let _savedExpression = null; // saved before a reaction
+let _idleTimer       = null;
+let _blinkTimer      = null;
 
 const FaceCanvas = {
   svg:          null,
@@ -72,7 +74,13 @@ const FaceCanvas = {
       document.getElementById('face-blush-right'),
     ];
     this._emotionDot = document.getElementById('emotion-dot');
+
+    // Start warm with a smile
+    if (this.mouth) this.mouth.setAttribute('d', MOUTH_PATHS.smile);
+
     this._bindInteractions();
+    this._startBlink();
+    this._startIdleAnimations();
   },
 
   // ── Mood (time-based, sets default mouth) ──────────────────────────────────
@@ -88,7 +96,7 @@ const FaceCanvas = {
     }
   },
 
-  // ── Emotion (AI-driven, updates the coloured dot) ─────────────────────────
+  // ── Emotion (AI-driven, updates the coloured dot only) ────────────────────
   setEmotion(emotion, intensity) {
     _currentEmotion = emotion || 'neutral';
     if (this._emotionDot) {
@@ -101,14 +109,27 @@ const FaceCanvas = {
     }
   },
 
-  // ── Full expression override (from AI analyze-sentiment) ──────────────────
+  // ── Full expression override (from AI analyze-sentiment only) ─────────────
+  // Called after chat exchanges. Eyebrows here are intentional emotional signals.
   setExpression(expr) {
-    if (!this.mouth) return;
+    if (!this.mouth || !expr) return;
     if (expr.mouth && MOUTH_PATHS[expr.mouth]) {
       this.mouth.setAttribute('d', MOUTH_PATHS[expr.mouth]);
     }
     if (expr.eyebrows !== undefined) {
       this._setEyebrows(expr.eyebrows);
+    }
+    if (expr.blush !== undefined) {
+      this._setBlush(!!expr.blush);
+    }
+  },
+
+  // ── Soft expression (from hour-change get-expression — no eyebrows) ────────
+  // Only updates mouth and blush, never touches eyebrows (avoids "stuck" look)
+  setSoftExpression(expr) {
+    if (!this.mouth || !expr) return;
+    if (expr.mouth && MOUTH_PATHS[expr.mouth]) {
+      this.mouth.setAttribute('d', MOUTH_PATHS[expr.mouth]);
     }
     if (expr.blush !== undefined) {
       this._setBlush(!!expr.blush);
@@ -145,7 +166,9 @@ const FaceCanvas = {
     if (_reactionTimer) clearTimeout(_reactionTimer);
     _reactionTimer = setTimeout(() => {
       if (_savedExpression) {
-        if (this.mouth && _savedExpression.mouth) this.mouth.setAttribute('d', _savedExpression.mouth);
+        if (this.mouth && _savedExpression.mouth) {
+          this.mouth.setAttribute('d', _savedExpression.mouth);
+        }
         this._setEyebrows(_savedExpression.eyebrows);
         this._setBlush(_savedExpression.blush);
         _savedExpression = null;
@@ -183,7 +206,7 @@ const FaceCanvas = {
     const d = el.getAttribute('d') || '';
     if (!d) return 'none';
     for (const [name, paths] of Object.entries(EYEBROW_PATHS)) {
-      if (paths[0] && d.includes(paths[0].slice(0, 8))) return name;
+      if (name !== 'none' && paths[0] && d.startsWith(paths[0].slice(0, 6))) return name;
     }
     return 'none';
   },
@@ -201,6 +224,45 @@ const FaceCanvas = {
       this.svg.style.transform = 'scale(1)';
       setTimeout(() => { this.svg.style.transition = ''; }, 200);
     }, 200);
+  },
+
+  // ── Natural eye blink ──────────────────────────────────────────────────────
+  _startBlink() {
+    const blink = () => {
+      // Squish eyes vertically to simulate blink
+      if (this.eyesGroup) {
+        this.eyesGroup.style.transition = 'transform 80ms ease';
+        this.eyesGroup.style.transform  = 'scaleY(0.08) translateY(4px)';
+        setTimeout(() => {
+          this.eyesGroup.style.transform = '';
+          setTimeout(() => { this.eyesGroup.style.transition = ''; }, 80);
+        }, 120);
+      }
+      // Schedule next blink (random 3-7 seconds)
+      const delay = 3000 + Math.random() * 4000;
+      _blinkTimer = setTimeout(blink, delay);
+    };
+    // First blink after 2 seconds
+    _blinkTimer = setTimeout(blink, 2000);
+  },
+
+  // ── Idle animations — Aria feels alive between interactions ───────────────
+  _startIdleAnimations() {
+    const idleReactions = ['wink', 'heart', 'star', 'tongue', 'grin'];
+    const scheduleNext = () => {
+      // Random idle reaction every 45-90 seconds
+      const delay = 45000 + Math.random() * 45000;
+      _idleTimer = setTimeout(() => {
+        // Only trigger idle if not mid-reaction and not mid-expression
+        if (!_reactionTimer) {
+          const reaction = idleReactions[Math.floor(Math.random() * idleReactions.length)];
+          this.triggerReaction(reaction);
+        }
+        scheduleNext();
+      }, delay);
+    };
+    // First idle animation after 10 seconds
+    setTimeout(() => scheduleNext(), 10000);
   },
 
   _bindInteractions() {
@@ -229,6 +291,15 @@ const FaceCanvas = {
         this.eyesGroup.classList.add('animate-eye-track');
       }, 1000);
     });
+
+    // Click on face triggers a random friendly reaction
+    if (this.svg) {
+      this.svg.addEventListener('click', () => {
+        const r = ['wink', 'heart', 'star', 'tongue'][Math.floor(Math.random() * 4)];
+        this.triggerReaction(r);
+        this._bounce();
+      });
+    }
   },
 };
 
