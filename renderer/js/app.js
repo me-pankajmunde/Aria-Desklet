@@ -9,10 +9,10 @@ let currentMin   = -1;
 let currentHour  = -1;
 let currentMood  = 'happy';
 
-// ── Quote store ────────────────────────────────────────────────────────────────
+// ── Quote store ────────────────────────────────────────────────────────────
 const _storedQuotes = [];
 
-// ── Init ──────────────────────────────────────────────────────────────────────
+// ── Init ──────────────────────────────────────────────────────────────────
 async function init() {
   console.log('[app] init() called — readyState:', document.readyState);
   // Start clock IMMEDIATELY — never let "--:--" stay on screen
@@ -64,14 +64,13 @@ async function init() {
 
   // ── Achievement toast handler ────────────────────────────────────────────
   window.addEventListener('achievement-unlocked', (e) => {
-    const label   = e.detail && e.detail.label ? e.detail.label : '🎉 Achievement!';
+    const label   = e.detail && e.detail.label ? e.detail.label : 'Achievement!';
     const toast   = document.getElementById('achievement-toast');
     const labelEl = document.getElementById('achievement-label');
     if (!toast || !labelEl) return;
 
     labelEl.textContent = label;
-    toast.classList.remove('opacity-0', 'translate-y-4');
-    toast.classList.add('opacity-100', 'translate-y-0');
+    toast.classList.add('visible');
 
     // Celebratory face + particles
     if (window.FaceCanvas) FaceCanvas.triggerReaction('star');
@@ -83,8 +82,7 @@ async function init() {
     // Auto-dismiss toast after 3.5 s
     clearTimeout(window._achieveToastTimer);
     window._achieveToastTimer = setTimeout(() => {
-      toast.classList.add('opacity-0', 'translate-y-4');
-      toast.classList.remove('opacity-100', 'translate-y-0');
+      toast.classList.remove('visible');
     }, 3500);
   });
 
@@ -92,21 +90,19 @@ async function init() {
   window.addEventListener('session-milestone', (e) => {
     const m     = e.detail && e.detail.minutes;
     const msgs  = {
-      25: '25 min of focus! You\'re on a roll! 🎯',
-      50: '50 minutes in — incredible focus! 💪',
-      90: '90 minutes deep! Absolute legend! 🔥',
+      25: '25 min of focus! You\'re on a roll!',
+      50: '50 minutes in — incredible focus!',
+      90: '90 minutes deep! Absolute legend!',
     };
     const text  = msgs[m] || `${m} minutes of focus!`;
     const bubble = document.getElementById('speech-bubble');
     const textEl = document.getElementById('speech-text');
     if (bubble && textEl) {
       textEl.textContent = text;
-      bubble.classList.remove('opacity-0');
-      bubble.classList.add('opacity-100');
+      bubble.style.opacity = '1';
       clearTimeout(window._milestoneTimer);
       window._milestoneTimer = setTimeout(() => {
-        bubble.classList.remove('opacity-100');
-        bubble.classList.add('opacity-0');
+        bubble.style.opacity = '0';
       }, 5000);
     }
     if (window.FaceCanvas) FaceCanvas.triggerReaction('heart');
@@ -138,7 +134,6 @@ async function init() {
     if (window.ActivityTracker) ActivityTracker.updateCfg(cfg);
     if (window.WorkBuddy)       WorkBuddy.updateCfg(cfg);
     applyThemeAccent();
-    applyGlow();
   });
 
   // Theme change callbacks
@@ -148,20 +143,12 @@ async function init() {
     applyDefaultParticlesForMood(currentMood, theme);
   });
 
-  // Quote drawer toggle
+  // Speech zone pill click → open chat
+  document.getElementById('speech-zone-pill')?.addEventListener('click', () => ChatPanel.toggle());
+
+  // Quote drawer toggle (kept for backward compat)
   document.getElementById('drawer-toggle')?.addEventListener('click', () => _toggleQuoteDrawer());
   document.getElementById('drawer-close')?.addEventListener('click',  () => _toggleQuoteDrawer(false));
-  // Close drawer on outside click
-  document.addEventListener('click', (e) => {
-    const drawer  = document.getElementById('quote-drawer');
-    const toggle  = document.getElementById('drawer-toggle');
-    if (!drawer || !toggle) return;
-    if (!drawer.classList.contains('-translate-x-full')) {
-      if (!drawer.contains(e.target) && !toggle.contains(e.target)) {
-        _toggleQuoteDrawer(false);
-      }
-    }
-  });
 
   // Settings button
   document.getElementById('btn-settings').addEventListener('click', () => SettingsPanel.show());
@@ -172,37 +159,28 @@ async function init() {
     const theme = ThemeEngine.current();
     Voice.speak(poem, theme);
     const btn = document.getElementById('btn-voice');
-    btn.classList.add('bg-primary', 'text-black');
-    setTimeout(() => btn.classList.remove('bg-primary', 'text-black'), 2000);
+    btn.classList.add('active');
+    setTimeout(() => btn.classList.remove('active'), 2000);
   });
 
   // Mic button
   document.getElementById('btn-mic').addEventListener('click', () => {
     const micBtn = document.getElementById('btn-mic');
-    const statusText = document.getElementById('system-status');
-    const liveDot = document.getElementById('live-dot');
-    
+
     if (Voice.isListening()) {
       Voice.stopListening();
-      micBtn.classList.remove('bg-primary', 'text-black');
-      if (statusText) statusText.textContent = 'System Active';
-      if (liveDot) liveDot.classList.remove('bg-red-500');
+      micBtn.classList.remove('active');
       FaceCanvas.setExpression({ eyebrows: 'none' });
     } else {
       const started = Voice.startListening((transcript) => {
-        micBtn.classList.remove('bg-primary', 'text-black');
-        if (statusText) statusText.textContent = 'System Active';
-        if (liveDot) liveDot.classList.remove('bg-red-500');
+        micBtn.classList.remove('active');
         FaceCanvas.setExpression({ eyebrows: 'none' });
         ChatPanel.show();
-        // Pre-fill input
         const input = document.getElementById('chat-input');
         if (input) { input.value = transcript; input.focus(); }
       });
       if (started) {
-        micBtn.classList.add('bg-primary', 'text-black');
-        if (statusText) statusText.textContent = 'Listening...';
-        if (liveDot) liveDot.classList.add('bg-red-500');
+        micBtn.classList.add('active');
         FaceCanvas.setExpression({ eyebrows: 'raised', mouth: 'o' });
       }
     }
@@ -223,10 +201,7 @@ async function init() {
   // Initial greeting flash
   flashGreeting();
 
-  applyGlow();
-
   // ── Startup greeting speech bubble ────────────────────────────────────────
-  // Aria says hello 1.8 seconds after launch — feels alive from the start
   setTimeout(() => _showStartupGreeting(), 1800);
 
   // Fetch an initial motivation quote shortly after launch (force = true)
@@ -240,10 +215,10 @@ function _showStartupGreeting() {
   const h     = new Date().getHours();
   const uname = (cfg.user_name || '').trim();
   const greetings = {
-    morning:   ['Rise and shine! Ready to make today amazing? ☀️', 'Good morning! Let\'s crush it today! 🚀', 'Morning! I\'ve been waiting for you ✨'],
-    afternoon: ['Good afternoon! Still going strong? 💪', 'Hey there! Time to stay focused 🎯', 'Afternoon check-in: you\'re doing great! ⚡'],
-    evening:   ['Evening! Winding down or pushing through? 🌙', 'Good evening! Great work today 🌟', 'Hey! Hope your day was productive 😊'],
-    night:     ['Late night hustle! I\'m here with you 🦉', 'Burning the midnight oil? You\'ve got this ✨', 'Still here, still cheering you on! 🌙'],
+    morning:   ['Rise and shine! Ready to make today amazing?', 'Good morning! Let\'s crush it today!', 'Morning! I\'ve been waiting for you'],
+    afternoon: ['Good afternoon! Still going strong?', 'Hey there! Time to stay focused', 'Afternoon check-in: you\'re doing great!'],
+    evening:   ['Evening! Winding down or pushing through?', 'Good evening! Great work today', 'Hey! Hope your day was productive'],
+    night:     ['Late night hustle! I\'m here with you', 'Burning the midnight oil? You\'ve got this', 'Still here, still cheering you on!'],
   };
   const period =
     h >= 5  && h < 12 ? 'morning'   :
@@ -258,9 +233,8 @@ function _showStartupGreeting() {
   const textEl = document.getElementById('speech-text');
   if (!bubble || !textEl) return;
 
-  textEl.textContent = msg;
-  bubble.classList.remove('opacity-0');
-  bubble.classList.add('opacity-100');
+  textEl.innerHTML = `<span class="label">Aria:</span> ${msg}`;
+  bubble.style.opacity = '1';
 
   // Warm expression for greeting
   if (window.FaceCanvas) {
@@ -269,22 +243,22 @@ function _showStartupGreeting() {
 
   // Auto-hide after 5 seconds, then revert face
   setTimeout(() => {
-    bubble.classList.remove('opacity-100');
-    bubble.classList.add('opacity-0');
+    bubble.style.opacity = '0';
     if (window.FaceCanvas) FaceCanvas.setMood(currentMood);
   }, 5000);
 }
 
-// ── Clock tick ─────────────────────────────────────────────────────────────────
+// ── Clock tick ─────────────────────────────────────────────────────────────
 async function tick() {
   const now    = new Date();
   const h      = now.getHours();
   const m      = now.getMinutes();
-  const timeStr = formatTime(now);
 
-  document.getElementById('clock-display').textContent = timeStr;
+  // Update big clock (split time and period)
+  _updateClockDisplay(now);
+
   // Diagnostic (one-time log per minute):
-  if (m !== currentMin) console.log('[tick]', timeStr);
+  if (m !== currentMin) console.log('[tick]', formatTime(now));
 
   // Hour change
   if (h !== currentHour) {
@@ -303,16 +277,14 @@ async function tick() {
       applyDefaultParticlesForMood(mood, ThemeEngine.current());
     }
 
-    // Update mood label in middle panel
+    // Update mood label
     const moodEl = document.getElementById('mood-label');
-    if (moodEl) moodEl.textContent = mood;
+    if (moodEl) moodEl.textContent = mood.toUpperCase();
 
     flashGreeting(h);
 
-    // Fetch mood-based expression from AI (async, non-blocking)
-    // Use setSoftExpression — only mouth/blush, NO eyebrows from hourly calls
-    // (eyebrows are reserved for reactions and conversation sentiment)
-    window.rClock.getExpression({ mood, context: `It is ${timeStr}`, cfg }).then(expr => {
+    // Fetch mood-based expression from AI
+    window.rClock.getExpression({ mood, context: `It is ${formatTime(now)}`, cfg }).then(expr => {
       FaceCanvas.setSoftExpression(expr);
       if (cfg.particles !== false && expr.particles && expr.particles !== 'none') {
         ParticleEngine.setType(expr.particles, {
@@ -327,12 +299,12 @@ async function tick() {
   if (m !== currentMin) {
     currentMin = m;
     if (m === 0 || m === 30) {
-      fetchQuote(timeStr, m);
+      fetchQuote(formatTime(now), m);
     }
   }
 }
 
-// ── Quote / Tip fetch (every 30 min or forced) ─────────────────────────────────
+// ── Quote / Tip fetch (every 30 min or forced) ─────────────────────────────
 async function fetchQuote(timeStr, minute, force = false) {
   try {
     let text, mood;
@@ -344,7 +316,7 @@ async function fetchQuote(timeStr, minute, force = false) {
       text = r.poem; mood = r.mood;
     }
 
-    // Update the dim preview in the middle panel
+    // Update the poem preview
     const poemEl = document.getElementById('poem-text');
     if (poemEl) {
       poemEl.style.opacity = '0';
@@ -353,7 +325,7 @@ async function fetchQuote(timeStr, minute, force = false) {
       requestAnimationFrame(() => { poemEl.style.opacity = '0.6'; });
     }
 
-    // Store and show popup
+    // Store and show in quotes card + popup
     _storeQuote(text);
     _showQuotePopup(text);
 
@@ -373,14 +345,13 @@ async function fetchQuote(timeStr, minute, force = false) {
   }
 }
 
-// ── Quote popup (shows for ~2 seconds then fades) ─────────────────────────────
+// ── Quote popup (shows for ~2 seconds then fades) ─────────────────────────
 function _showQuotePopup(text) {
   const popup  = document.getElementById('quote-popup');
   const textEl = document.getElementById('quote-popup-text');
   if (!popup || !textEl) return;
 
   textEl.textContent = text;
-  // Show: opacity-100 + scale-100
   popup.style.opacity   = '1';
   popup.style.transform = 'scale(1)';
 
@@ -391,31 +362,33 @@ function _showQuotePopup(text) {
   }, 2000);
 }
 
-// ── Quote store & drawer ───────────────────────────────────────────────────────
+// ── Quote store & inline quotes card ──────────────────────────────────────
 function _storeQuote(text) {
   const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   _storedQuotes.unshift({ text, time });
   if (_storedQuotes.length > 10) _storedQuotes.pop();
-  // Refresh drawer if it's open
-  const drawer = document.getElementById('quote-drawer');
-  if (drawer && !drawer.classList.contains('-translate-x-full')) {
-    _renderQuoteDrawer();
-  }
+  _renderQuotesCard();
 }
 
-function _renderQuoteDrawer() {
+function _renderQuotesCard() {
   const list = document.getElementById('quote-drawer-list');
   if (!list) return;
 
+  // Update time header
+  const timeHeader = document.getElementById('quotes-time-header');
+  if (timeHeader) {
+    timeHeader.textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
   if (_storedQuotes.length === 0) {
-    list.innerHTML = '<p class="text-[10px] text-slate-500 text-center mt-4 italic">No quotes yet…<br/>Check back in 30 min!</p>';
+    list.innerHTML = '<p class="quote-empty">No quotes yet&hellip;<br/>Check back in 30 min!</p>';
     return;
   }
 
-  list.innerHTML = _storedQuotes.map(q => `
-    <div class="p-2 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-primary/20 transition-colors">
-      <p class="text-[9px] text-slate-300 italic leading-snug">"${q.text}"</p>
-      <p class="text-[8px] text-primary/50 mt-1 text-right">${q.time}</p>
+  list.innerHTML = _storedQuotes.slice(0, 5).map(q => `
+    <div class="quote-entry">
+      <div class="quote-text">"${q.text}"</div>
+      <div class="quote-time">${q.time}</div>
     </div>
   `).join('');
 }
@@ -428,14 +401,22 @@ function _toggleQuoteDrawer(open) {
 
   if (shouldOpen) {
     drawer.classList.remove('-translate-x-full');
-    _renderQuoteDrawer();
+    // Render the alt drawer list too
+    const altList = document.getElementById('quote-drawer-list-alt');
+    if (altList && _storedQuotes.length > 0) {
+      altList.innerHTML = _storedQuotes.map(q => `
+        <div class="p-2 rounded-lg bg-slate-800/50 border border-slate-700/30 hover:border-primary/20 transition-colors">
+          <p class="text-[9px] text-slate-300 italic leading-snug">"${q.text}"</p>
+          <p class="text-[8px] text-primary/50 mt-1 text-right">${q.time}</p>
+        </div>
+      `).join('');
+    }
   } else {
     drawer.classList.add('-translate-x-full');
   }
 }
 
-// ── Easter egg chat commands ────────────────────────────────────────────────────
-// Patch ChatPanel._sendMessage to check easter egg commands first
+// ── Easter egg chat commands ────────────────────────────────────────────────
 const _origSend = ChatPanel._sendMessage?.bind(ChatPanel);
 if (ChatPanel._sendMessage) {
   ChatPanel._sendMessage = function() {
@@ -450,16 +431,28 @@ if (ChatPanel._sendMessage) {
   };
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────────────
-/** Kick off a simple 1-second clock update that never relies on async IPC.
- *  This ensures the clock is always ticking even if init() hits an error. */
+// ── Helpers ────────────────────────────────────────────────────────────────
 function _startFallbackClock() {
-  const update = () => {
-    const el = document.getElementById('clock-display');
-    if (el) el.textContent = formatTime(new Date());
-  };
-  update(); // run immediately
+  const update = () => _updateClockDisplay(new Date());
+  update();
   setInterval(update, 1000);
+}
+
+function _updateClockDisplay(date) {
+  let h = date.getHours();
+  const m  = date.getMinutes();
+  const am = h < 12 ? 'AM' : 'PM';
+  h = h % 12 || 12;
+
+  const timeEl   = document.getElementById('clock-time');
+  const periodEl = document.getElementById('clock-period');
+
+  if (timeEl) timeEl.textContent = `${h}:${String(m).padStart(2, '0')}`;
+  if (periodEl) periodEl.textContent = am;
+
+  // Also update legacy clock-display if it exists
+  const legacyClock = document.getElementById('clock-display');
+  if (legacyClock) legacyClock.textContent = formatTime(date);
 }
 
 function formatTime(date) {
@@ -472,18 +465,16 @@ function formatTime(date) {
 
 function flashGreeting(h = new Date().getHours()) {
   const periods = {
-    morning:   { range: [5,  11], icon: '☀️', emoji: '🌅' },
-    afternoon: { range: [12, 16], icon: '⚡', emoji: '☀️' },
-    evening:   { range: [17, 20], icon: '🌙', emoji: '🌆' },
-    night:     { range: [21, 23], icon: '✨', emoji: '🌙' },
+    morning:   { range: [5,  11], icon: '' },
+    afternoon: { range: [12, 16], icon: '' },
+    evening:   { range: [17, 20], icon: '' },
+    night:     { range: [21, 23], icon: '' },
   };
-  for (const [period, { range, icon }] of Object.entries(periods)) {
+  for (const [period, { range }] of Object.entries(periods)) {
     if (h >= range[0] && h <= range[1]) {
-      const uname   = (cfg.user_name || 'Pankaj').trim();
-      const grEl    = document.getElementById('greeting');
-      if (grEl) {
-        grEl.innerHTML = `Good ${period}, <span class="text-primary" id="user-name">${uname}!</span> <span class="inline-block animate-spin-slow ml-1">${icon}</span>`;
-      }
+      const uname = (cfg.user_name || cfg.assistant_name || 'Aria').trim();
+      const grEl  = document.getElementById('greeting');
+      if (grEl) grEl.textContent = uname;
       break;
     }
   }
@@ -493,18 +484,6 @@ function applyThemeAccent() {
   const accent = cfg.poem_color || ThemeEngine.getAccent();
   document.documentElement.style.setProperty('--accent', accent);
   FaceCanvas?.setColor(accent);
-}
-
-function applyGlow() {
-  const app = document.getElementById('app');
-  if (!app) return;
-  const accent = cfg.poem_color || ThemeEngine.getAccent();
-  if (cfg.glow_enabled !== false) {
-    // Apply glow to the main container or specific elements if needed
-    // app.style.filter = `drop-shadow(0 0 14px ${accent}55)`;
-  } else {
-    // app.style.filter = '';
-  }
 }
 
 function applyDefaultParticlesForMood(mood, theme) {
@@ -520,9 +499,7 @@ function applyDefaultParticlesForMood(mood, theme) {
   ParticleEngine.setType(map[mood] || 'sparkles', { baseColor: accent });
 }
 
-// ── Start ──────────────────────────────────────────────────────────────────────
-// Scripts sit at bottom of <body> — DOM is already parsed, call init directly.
-// DOMContentLoaded listener is a backup in case Electron fires scripts early.
+// ── Start ──────────────────────────────────────────────────────────────────
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', init);
 } else {

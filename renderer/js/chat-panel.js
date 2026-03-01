@@ -253,12 +253,10 @@ const ChatPanel = {
         const st = document.getElementById('speech-text');
         if (sb && st) {
           st.textContent = text;
-          sb.classList.remove('opacity-0');
-          sb.classList.add('opacity-100');
+          sb.style.opacity = '1';
           clearTimeout(this._speechTimeout);
           this._speechTimeout = setTimeout(() => {
-            sb.classList.remove('opacity-100');
-            sb.classList.add('opacity-0');
+            sb.style.opacity = '0';
           }, 4000);
         }
       }

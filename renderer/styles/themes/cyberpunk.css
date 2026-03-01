@@ -1,7 +1,8 @@
 /* ─── Cyberpunk / Retro-Futuristic Theme ─────────────────────────────────── */
-:root {
+#app[data-theme="cyberpunk"] {
   --accent:      #00ffff;
   --accent-dim:  #00cccc;
+  --accent-gold: #ff0080;
   --text:        #c0f0ff;
   --text-dim:    #4a7a8a;
   --bg:          rgba(4, 4, 12, 0.96);
@@ -9,13 +10,10 @@
   --chat-bg:     rgba(2, 2, 10, 0.98);
   --settings-bg: rgba(2, 2, 10, 0.99);
   --glow-color:  rgba(0, 255, 255, 0.3);
-  --glow2:       rgba(255, 0, 128, 0.15);
   --font-display:'Share Tech Mono', monospace;
   --font-body:   'Share Tech Mono', monospace;
   --particle:    #00ffff;
-}
 
-#app[data-theme="cyberpunk"] {
   background:
     linear-gradient(180deg, rgba(4,4,12,0.96) 0%, rgba(8,2,18,0.96) 100%);
   border: 1px solid rgba(0, 255, 255, 0.22);
@@ -30,7 +28,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   background: repeating-linear-gradient(
     0deg,
     transparent 0px,
@@ -47,7 +45,7 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 18px;
+  border-radius: 22px;
   background: radial-gradient(ellipse at center,
     transparent 65%,
     rgba(0, 0, 0, 0.4) 100%
@@ -62,19 +60,26 @@
     0 0 80px rgba(255, 0, 128, 0.10);
 }
 
-.poem-text {
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  text-shadow: 0 0 8px rgba(0, 255, 255, 0.6);
+#app[data-theme="cyberpunk"] .big-clock {
+  text-shadow: 0 0 8px rgba(0, 255, 255, 0.8);
+  letter-spacing: -1px;
 }
-.clock-display {
-  text-shadow: 0 0 6px rgba(0, 255, 255, 0.8);
-  letter-spacing: 0.1em;
-}
-.live-dot {
+
+#app[data-theme="cyberpunk"] .mood-line .mood-val {
   color: #ff0080;
-  text-shadow: 0 0 6px #ff0080;
-  animation: pulse 1s ease-in-out infinite;
+  text-shadow: 0 0 6px rgba(255, 0, 128, 0.6);
+}
+
+#app[data-theme="cyberpunk"] .stat-box {
+  border-color: rgba(0, 255, 255, 0.3);
+}
+
+#app[data-theme="cyberpunk"] .quote-text {
+  text-shadow: 0 0 6px rgba(0, 255, 255, 0.4);
+}
+
+#app[data-theme="cyberpunk"] .face-head {
+  stroke: rgba(0, 255, 255, 0.4);
 }
 
 /* Glitch on hover */
@@ -85,8 +90,4 @@
   60%  { clip-path: inset(10% 0 75% 0); transform: translate(2px); }
   80%  { clip-path: inset(50% 0 30% 0); transform: translate(-3px); }
   100% { clip-path: inset(20% 0 60% 0); transform: translate(0); }
-}
-
-.poem-text:hover {
-  animation: glitch-1 0.3s steps(1) 0s 2;
 }

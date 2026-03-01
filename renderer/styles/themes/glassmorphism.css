@@ -1,41 +1,33 @@
 /* ─── Glassmorphism Theme (default) ──────────────────────────────────────── */
 :root {
-  --accent:      #00d68f;
-  --accent-dim:  #00a86b;
+  --accent:      #7ec8e3;
+  --accent-dim:  #5aa8c3;
+  --accent-gold: #d4a056;
   --text:        #e8f5ff;
   --text-dim:    #8a9fc0;
-  --bg:          rgba(12, 14, 30, 0.90);
-  --border:      rgba(255, 255, 255, 0.10);
-  --chat-bg:     rgba(8, 10, 22, 0.97);
-  --settings-bg: rgba(8, 10, 22, 0.98);
-  --glow-color:  rgba(0, 214, 143, 0.25);
-  --font-display:'DM Sans', sans-serif;
-  --font-body:   'Outfit', sans-serif;
-  --particle:    #00d68f;
+  --bg:          rgba(45, 48, 58, 0.78);
+  --border:      rgba(255, 255, 255, 0.08);
+  --chat-bg:     rgba(30, 33, 42, 0.97);
+  --settings-bg: rgba(30, 33, 42, 0.98);
+  --glow-color:  rgba(126, 200, 227, 0.25);
+  --font-display:'Inter', sans-serif;
+  --font-body:   'Inter', sans-serif;
+  --particle:    #7ec8e3;
 }
 
 #app[data-theme="glassmorphism"] {
-  background: linear-gradient(
-    135deg,
-    rgba(12, 14, 34, 0.88) 0%,
-    rgba(18, 22, 48, 0.84) 50%,
-    rgba(10, 12, 28, 0.90) 100%
-  );
-  backdrop-filter: blur(24px) saturate(180%);
-  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  background: rgba(45, 48, 58, 0.78);
+  backdrop-filter: blur(40px) saturate(180%);
+  -webkit-backdrop-filter: blur(40px) saturate(180%);
   border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.45),
-    0 0 0 0.5px rgba(255, 255, 255, 0.04),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 20px 60px rgba(0, 0, 0, 0.35),
+    0 4px 16px rgba(0, 0, 0, 0.2);
 }
 
 #app[data-theme="glassmorphism"]:hover {
   box-shadow:
-    0 12px 40px rgba(0, 0, 0, 0.55),
+    0 24px 70px rgba(0, 0, 0, 0.4),
     0 0 30px var(--glow-color),
-    0 0 0 0.5px rgba(255, 255, 255, 0.06);
+    0 4px 16px rgba(0, 0, 0, 0.2);
 }
-
-.poem-text { font-weight: 300; letter-spacing: 0.01em; }
-.clock-display { font-weight: 300; }

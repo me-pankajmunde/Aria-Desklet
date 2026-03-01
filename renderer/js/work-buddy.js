@@ -167,13 +167,11 @@ const WorkBuddy = {
     if (!bubble || !textEl) return;
 
     textEl.textContent = text;
-    bubble.classList.remove('opacity-0');
-    bubble.classList.add('opacity-100');
+    bubble.style.opacity = '1';
 
     clearTimeout(this._speechTimer);
     this._speechTimer = setTimeout(() => {
-      bubble.classList.remove('opacity-100');
-      bubble.classList.add('opacity-0');
+      bubble.style.opacity = '0';
     }, 6000);
   },
 
@@ -183,7 +181,7 @@ const WorkBuddy = {
     if (!badge) return;
 
     if (show) {
-      badge.classList.remove('hidden');
+      badge.style.display = 'flex';
       // Update elapsed time display every 30 seconds
       this._badgeTimer = setInterval(() => {
         if (!elapsed || !this.startTime) return;
@@ -195,7 +193,7 @@ const WorkBuddy = {
       // Set initial value immediately
       if (elapsed) elapsed.textContent = '0m';
     } else {
-      badge.classList.add('hidden');
+      badge.style.display = 'none';
       clearInterval(this._badgeTimer);
       this._badgeTimer = null;
     }
