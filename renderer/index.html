@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; script-src 'self' 'unsafe-inline' 'unsafe-hashes' https://cdn.tailwindcss.com; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com"/>
-  <title>Rhyming Clock</title>
+  <title>Aria — Desktop Work Buddy</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
   <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet"/>
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script>
@@ -17,256 +17,188 @@
       theme: {
         extend: {
           colors: {
-            primary: "var(--color-primary, #00FF94)",
-            "primary-dim": "var(--color-primary-dim, #00CC76)",
+            primary: "var(--color-primary, #7ec8e3)",
+            "primary-dim": "var(--color-primary-dim, #5aa8c3)",
             "background-light": "var(--color-bg-light, #F0F4F8)",
             "background-dark": "var(--color-bg-dark, #0B1120)",
             "surface-light": "var(--color-surface-light, #FFFFFF)",
             "surface-dark": "var(--color-surface-dark, #162032)",
-            "accent-blue": "#3B82F6",
-            "robot-eye-dark": "#1E3A8A",
-            "robot-eye-light": "#60A5FA",
+            "accent-gold": "#d4a056",
           },
           fontFamily: {
-            sans: ['Outfit', 'sans-serif'],
-            display: ['Outfit', 'sans-serif'],
+            sans: ['Inter', 'Outfit', 'sans-serif'],
+            display: ['Inter', 'sans-serif'],
           },
-          backgroundImage: {
-            'cosmic-gradient': 'radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.15) 0%, transparent 25%), radial-gradient(circle at 90% 80%, rgba(0, 255, 148, 0.08) 0%, transparent 25%)',
-            'grid-pattern': 'linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px)',
-          },
-          animation: {
-            'float': 'float 6s ease-in-out infinite',
-            'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-            'glow': 'glow 2s ease-in-out infinite alternate',
-            'eye-track': 'eyeTrack 5s ease-in-out infinite',
-            'speech-pop': 'popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) 1s forwards',
-          },
-          keyframes: {
-            float: {
-              '0%, 100%': { transform: 'translateY(0)' },
-              '50%': { transform: 'translateY(-10px)' },
-            },
-            glow: {
-              'from': { boxShadow: '0 0 10px rgba(0, 255, 148, 0.2)' },
-              'to': { boxShadow: '0 0 20px rgba(0, 255, 148, 0.6)' },
-            },
-            eyeTrack: {
-              '0%, 100%': { transform: 'translateX(0)' },
-              '25%': { transform: 'translateX(-4px)' },
-              '75%': { transform: 'translateX(4px)' },
-            },
-            popIn: {
-              '0%': { opacity: '0', transform: 'scale(0.8) translateY(10px)' },
-              '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
-            }
-          }
         },
       },
     };
   </script>
-  <style>
-    .bg-grid { background-size: 40px 40px; }
-    .glass-panel {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .dark .glass-panel {
-      background: rgba(22, 32, 50, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-    }
-    .eye-blink { animation: blink 4s infinite; }
-    @keyframes blink {
-      0%, 96%, 100% { transform: scaleY(1); }
-      98% { transform: scaleY(0.1); }
-    }
-    .speech-bubble::after {
-      content: '';
-      position: absolute;
-      bottom: -8px;
-      left: 50%;
-      transform: translateX(-50%);
-      border-width: 8px 8px 0;
-      border-style: solid;
-      border-color: #F0F9FF transparent transparent transparent;
-    }
-    .dark .speech-bubble::after {
-      border-color: #1E293B transparent transparent transparent;
-    }
-    body { min-height: 100dvh; -webkit-app-region: drag; }
-    button, input, .no-drag { -webkit-app-region: no-drag; }
-    
-    /* Chat Panel Slide-up */
-    #chat-panel {
-      transition: transform 0.3s ease-in-out;
-    }
-    #chat-panel.hidden {
-      transform: translateY(100%);
-    }
-
-    /* Settings Panel Slide-in */
-    #settings-panel {
-      transition: transform 0.3s ease-in-out;
-    }
-    #settings-panel.hidden {
-      transform: translateX(100%);
-    }
-
-    /* Aria Speech Zone (slides down from top) */
-    #aria-speech-zone {
-      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Quote Popup */
-    #quote-popup {
-      transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    }
-
-    /* Quote Drawer */
-    #quote-drawer {
-      transition: transform 0.3s ease-in-out;
-    }
-
-    /* Streaming cursor blink */
-    @keyframes stream-cursor {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-    .stream-cursor { animation: stream-cursor 0.8s ease-in-out infinite; }
-  </style>
+  <link rel="stylesheet" href="styles/base.css"/>
+  <link rel="stylesheet" href="styles/themes/glassmorphism.css"/>
+  <link rel="stylesheet" href="styles/themes/cyberpunk.css"/>
+  <link rel="stylesheet" href="styles/themes/playful.css"/>
+  <link rel="stylesheet" href="styles/themes/organic.css"/>
 </head>
-<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-100 min-h-screen font-sans selection:bg-primary selection:text-background-dark overflow-hidden relative transition-colors duration-300 dark">
-  
+<body class="dark">
+
   <!-- Particle canvas (background layer) -->
-  <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+  <canvas id="particle-canvas" class="fixed inset-0 pointer-events-none" style="z-index:0;"></canvas>
 
-  <div class="fixed inset-0 pointer-events-none z-0">
-    <div class="absolute inset-0 bg-grid-pattern bg-grid opacity-30 dark:opacity-20"></div>
-    <div class="absolute inset-0 bg-cosmic-gradient"></div>
-    <div class="absolute top-20 left-10 w-1 h-1 bg-primary rounded-full opacity-40 animate-pulse"></div>
-    <div class="absolute top-40 right-20 w-1.5 h-1.5 bg-blue-400 rounded-full opacity-30 animate-pulse delay-700"></div>
-    <div class="absolute bottom-32 left-1/4 w-1 h-1 bg-purple-400 rounded-full opacity-30 animate-pulse delay-300"></div>
-  </div>
+  <!-- Nature-inspired background gradient -->
+  <div class="bg-layer"></div>
 
-  <div id="app" class="relative z-10 flex flex-row h-[100dvh] w-full px-2 py-2 items-center justify-between overflow-hidden space-x-2">
-    
-    <!-- Left Side: Face & Greeting -->
-    <div class="flex flex-col items-center justify-center w-1/4 h-full">
-      <div id="face-container" class="relative animate-float group cursor-pointer flex flex-col items-center no-drag scale-50 origin-center -mt-20">
-        <div id="speech-bubble" class="speech-bubble absolute -top-16 opacity-0 bg-sky-50 dark:bg-slate-800 px-4 py-2 rounded-xl shadow-lg border border-sky-100 dark:border-slate-700 z-20 transition-opacity duration-300">
-          <p id="speech-text" class="text-xs font-medium text-slate-600 dark:text-sky-200 whitespace-nowrap">You got this! 🚀</p>
+  <!-- ═══════════════ MAIN WIDGET ═══════════════ -->
+  <div class="widget-wrapper">
+    <div id="app" class="main-widget" data-theme="glassmorphism">
+
+      <!-- ── Top Section: Name + Speech Zone + Settings ── -->
+      <div class="top-section">
+        <div id="greeting" class="aria-name">Aria</div>
+
+        <div class="speech-zone-wrapper">
+          <div id="speech-zone-pill" class="speech-zone-pill no-drag" style="cursor:pointer;">
+            SPEECH ZONE <span class="chevron">&#9662;</span>
+          </div>
+          <!-- Speech bubble (used by streaming chat & startup greeting) -->
+          <div id="speech-bubble" class="speech-bubble" style="opacity:0; transition: opacity 0.3s;">
+            <p id="speech-text" class="speech-line">You got this! 🚀</p>
+          </div>
         </div>
-        <!-- Pulsing ambient glow behind face -->
-        <div class="absolute inset-0 pointer-events-none z-0">
-          <div class="absolute inset-0 bg-blue-500 opacity-10 blur-3xl rounded-full transform scale-150 group-hover:opacity-25 transition-opacity duration-500"></div>
-          <div class="absolute inset-0 bg-primary opacity-5 blur-2xl rounded-full transform scale-125 animate-pulse-slow"></div>
+
+        <div id="btn-settings" class="settings-btn no-drag">
+          <svg viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>
+        </div>
+      </div>
+
+      <!-- ── Content Area: Quotes | Face+Clock | Stats ── -->
+      <div class="content-area">
+
+        <!-- Left: Quotes Card -->
+        <div id="quotes-card" class="quotes-card no-drag">
+          <div class="quotes-header">Motivational Quotes</div>
+          <div id="quotes-time-header" class="quotes-time-header"></div>
+          <div id="quote-drawer-list" class="quotes-list">
+            <p class="quote-empty">No quotes yet&hellip;<br/>Check back in 30 min!</p>
+          </div>
         </div>
 
-        <!-- SVG Face -->
-        <svg id="face-svg" class="relative z-10 drop-shadow-2xl" fill="none" height="120" viewBox="0 0 200 120" width="200" xmlns="http://www.w3.org/2000/svg">
-          <rect class="stroke-slate-700 dark:stroke-slate-600" fill="#0B1120" height="100" rx="20" stroke-width="2" width="180" x="10" y="10"></rect>
-          <path id="face-mouth" d="M75 85 Q 100 97, 125 85" fill="none" stroke="white" stroke-opacity="0.75" stroke-width="3" stroke-linecap="round" style="transition: d 0.4s ease"></path>
-          <!-- Eyebrows (hidden by default, shown by AI emotion) -->
-          <path id="eyebrow-left"  d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
-          <path id="eyebrow-right" d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
-          <!-- Blush (hidden by default) -->
-          <ellipse id="face-blush-left"  cx="50"  cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
-          <ellipse id="face-blush-right" cx="150" cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
-          <g class="eye-blink origin-center" style="transform-origin: 100px 60px;">
-            <g id="eyes-group" class="animate-eye-track">
-              <circle class="dark:fill-blue-600" cx="70" cy="60" fill="#3B82F6" r="18"></circle>
-              <circle class="dark:fill-blue-300" cx="66" cy="56" fill="#60A5FA" r="12"></circle>
-              <circle class="dark:fill-blue-600" cx="130" cy="60" fill="#3B82F6" r="18"></circle>
-              <circle class="dark:fill-blue-300" cx="126" cy="56" fill="#60A5FA" r="12"></circle>
-            </g>
-          </g>
-        </svg>
-        
-        <!-- Emotion dot — color driven by AI sentiment -->
-        <div id="emotion-dot"
-          class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-slate-500
-                 border border-slate-700 z-20 transition-colors duration-700"
-          title="neutral"></div>
-        <div class="w-16 h-4 bg-gradient-to-b from-slate-700 to-slate-800 rounded-b-lg -mt-3 relative -z-10 opacity-80"></div>
-        <div class="mt-2 text-center">
-          <h2 id="greeting" class="text-sm font-bold text-slate-800 dark:text-white">
-            Hi, <span class="text-primary" id="user-name">Pankaj!</span>
-          </h2>
+        <!-- Center: Avatar + Clock + Mood -->
+        <div class="center-area">
+          <!-- Avatar circle containing the SVG face -->
+          <div id="face-container" class="avatar-circle no-drag" style="cursor:pointer;">
+            <!-- Pulsing ambient glow behind face -->
+            <div class="avatar-glow"></div>
+            <!-- SVG Face (existing) -->
+            <svg id="face-svg" class="face-svg" fill="none" height="120" viewBox="0 0 200 120" width="200" xmlns="http://www.w3.org/2000/svg">
+              <rect class="face-head" fill="#1a1f2e" height="100" rx="20" stroke-width="2" width="180" x="10" y="10"></rect>
+              <path id="face-mouth" d="M75 85 Q 100 97, 125 85" fill="none" stroke="white" stroke-opacity="0.75" stroke-width="3" stroke-linecap="round" style="transition: d 0.4s ease"></path>
+              <path id="eyebrow-left"  d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
+              <path id="eyebrow-right" d="" stroke="white" stroke-width="3" stroke-linecap="round" fill="none" opacity="0" style="transition:opacity 0.3s,d 0.3s"/>
+              <ellipse id="face-blush-left"  cx="50"  cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
+              <ellipse id="face-blush-right" cx="150" cy="72" rx="14" ry="8" fill="rgba(255,100,150,0.25)" opacity="0" style="transition:opacity 0.4s"/>
+              <g class="eye-blink" style="transform-origin: 100px 60px;">
+                <g id="eyes-group">
+                  <circle cx="70" cy="60" fill="#3B82F6" r="18"></circle>
+                  <circle cx="66" cy="56" fill="#60A5FA" r="12"></circle>
+                  <circle cx="130" cy="60" fill="#3B82F6" r="18"></circle>
+                  <circle cx="126" cy="56" fill="#60A5FA" r="12"></circle>
+                </g>
+              </g>
+            </svg>
+            <!-- Emotion dot -->
+            <div id="emotion-dot" class="emotion-dot" title="neutral"></div>
+          </div>
+
+          <!-- Work Buddy session badge -->
+          <div id="work-buddy-badge" class="work-buddy-badge" style="display:none;">
+            <span class="wb-dot"></span>
+            <span class="wb-label">FOCUS</span>
+            <span id="buddy-elapsed" class="wb-elapsed">0m</span>
+          </div>
+
+          <!-- Big Clock -->
+          <div class="big-clock">
+            <span id="clock-time">--:--</span><span id="clock-period" class="period"></span>
+          </div>
+
+          <!-- Current Mood -->
+          <div class="mood-line">
+            CURRENT MOOD: <span id="mood-label" class="mood-val">READY</span>
+          </div>
+
+          <!-- Quote preview (dim, from old middle panel) -->
+          <p id="poem-text" class="poem-preview">Waiting for inspiration&hellip;</p>
+        </div>
+
+        <!-- Right: Stats Area -->
+        <div class="stats-area">
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-label">Focus</div>
+              <div id="focus-stat" class="stat-value">0m</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Streak</div>
+              <div id="streak-stat" class="stat-value">0d</div>
+            </div>
+          </div>
+          <div class="stats-row">
+            <div class="stat-box">
+              <div class="stat-label">Sessions</div>
+              <div id="sessions-stat" class="stat-value">0</div>
+            </div>
+            <div class="stat-box">
+              <div class="stat-label">Score</div>
+              <div id="score-stat" class="stat-value">&mdash;</div>
+            </div>
+          </div>
+          <!-- Control buttons row -->
+          <div class="controls-row">
+            <button id="btn-mic" class="ctrl-btn no-drag" title="Microphone">
+              <span class="material-icons-round">mic</span>
+            </button>
+            <button id="btn-voice" class="ctrl-btn no-drag" title="Read aloud">
+              <span class="material-icons-round">volume_up</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── Bottom Labels ── -->
+      <div class="bottom-labels">
+        <div class="bottom-label" style="text-align:left;">Quotes</div>
+        <div class="bottom-label">Mood</div>
+        <div class="bottom-label" style="text-align:right;">Productivity</div>
+      </div>
+
+    </div><!-- /main-widget -->
+
+    <!-- Achievement Toast (floating outside widget) -->
+    <div id="achievement-toast" class="achievement-toast">
+      <div style="position:relative;">
+        <div class="achievement-party-left">🎊</div>
+        <div class="achievement-party-right">🎉</div>
+        <div class="achievement-box">
+          <div class="ach-line1">🏆 ACHIEVEMENT UNLOCKED!</div>
+          <div id="achievement-label" class="ach-line2">First Focus</div>
         </div>
       </div>
     </div>
+  </div><!-- /widget-wrapper -->
 
-    <!-- Middle: Clock & Quote Preview -->
-    <div class="flex flex-col items-center justify-center w-2/4 h-full">
-      <div class="w-full glass-panel rounded-2xl p-3 relative overflow-hidden transition-all duration-300 hover:border-primary/30 flex flex-col justify-center h-full">
-        <div class="absolute top-1 left-2 text-3xl font-serif text-primary opacity-20 select-none">"</div>
-        <!-- Work Buddy session badge -->
-        <div id="work-buddy-badge" class="hidden relative z-10 flex items-center space-x-1 mb-1">
-          <span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse inline-block"></span>
-          <span class="text-[9px] text-primary font-semibold uppercase tracking-widest">FOCUS</span>
-          <span id="buddy-elapsed" class="text-[9px] text-primary font-mono ml-0.5">0m</span>
-        </div>
-        <div class="relative z-10 flex flex-col items-center justify-center space-y-0.5">
-          <!-- Clock (prominent) -->
-          <span id="clock-display" class="text-primary font-mono text-2xl tracking-wider font-bold leading-none">--:--</span>
-          <!-- Current mood label -->
-          <span id="mood-label" class="text-[8px] text-slate-400 uppercase tracking-widest font-semibold mt-0.5">ready</span>
-          <!-- Last motivation quote preview (dim) -->
-          <p id="poem-text" class="text-[9px] text-slate-500 dark:text-slate-400 text-center italic leading-snug line-clamp-2 px-1 mt-1 opacity-60 max-w-full">
-            Waiting for inspiration…
-          </p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Right Side: Stats & Controls -->
-    <div class="flex flex-col items-end justify-center w-1/4 h-full">
-      <div class="glass-panel rounded-2xl p-2 flex flex-col items-center justify-center shadow-lg shadow-black/5 dark:shadow-black/20 w-full h-full">
-        <!-- 4-stat grid: Focus / Streak / Sessions / Score -->
-        <div class="grid grid-cols-2 gap-x-2 gap-y-0.5 w-full mb-1 flex-1 content-center">
-          <div class="flex flex-col items-center">
-            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Focus</span>
-            <span id="focus-stat" class="text-xs font-bold text-slate-800 dark:text-white">0m</span>
-          </div>
-          <div class="flex flex-col items-center">
-            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Streak</span>
-            <span id="streak-stat" class="text-xs font-bold text-slate-800 dark:text-white">0d</span>
-          </div>
-          <div class="flex flex-col items-center">
-            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Sessions</span>
-            <span id="sessions-stat" class="text-xs font-bold text-slate-800 dark:text-white">0</span>
-          </div>
-          <div class="flex flex-col items-center">
-            <span class="text-[7px] text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold">Score</span>
-            <span id="score-stat" class="text-xs font-bold text-primary">—</span>
-          </div>
-        </div>
-        <div class="flex items-center justify-center space-x-2 w-full pt-1 border-t border-slate-200 dark:border-slate-700/50">
-          <button id="btn-mic" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-black dark:hover:bg-primary dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
-            <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">mic</span>
-          </button>
-          <button id="btn-voice" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-black dark:hover:bg-primary dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
-            <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">volume_up</span>
-          </button>
-          <button id="btn-settings" class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors no-drag">
-            <span class="material-icons-round text-slate-500 dark:text-slate-400 text-[12px]">settings</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
+  <!-- ═══════════════ OVERLAYS ═══════════════ -->
 
   <!-- Aria Speech Zone (slides down from top when streaming) -->
   <div id="aria-speech-zone"
-    class="fixed top-0 left-0 right-0 z-[55] bg-slate-950/95 backdrop-blur-sm
+    class="fixed top-0 left-0 right-0 bg-slate-950/95 backdrop-blur-sm
            border-b border-primary/30 px-3 py-2
-           transform -translate-y-full pointer-events-none">
+           transform -translate-y-full pointer-events-none"
+    style="z-index:55; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);">
     <div class="flex items-start space-x-2 max-w-full">
-      <span class="text-primary text-sm mt-0.5 flex-shrink-0 animate-pulse">◆</span>
+      <span class="text-primary text-sm mt-0.5 flex-shrink-0 animate-pulse">&#9670;</span>
       <p id="aria-speech-text"
-         class="text-xs text-slate-100 leading-snug flex-1 line-clamp-3 min-h-[1rem]"></p>
+         class="text-xs text-slate-100 leading-snug flex-1 min-h-[1rem]"
+         style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;"></p>
       <span id="aria-speech-cursor"
             class="stream-cursor w-0.5 h-3 bg-primary flex-shrink-0 mt-1 opacity-0"></span>
     </div>
@@ -274,62 +206,64 @@
 
   <!-- Quote Popup (appears center-screen for 2 seconds on new quote) -->
   <div id="quote-popup"
-    class="fixed inset-0 z-[52] flex items-center justify-center pointer-events-none
-           opacity-0 scale-95">
+    class="fixed inset-0 flex items-center justify-center pointer-events-none"
+    style="z-index:52; opacity:0; transform:scale(0.95); transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);">
     <div class="bg-slate-950/97 backdrop-blur-md border border-primary/40
                 rounded-2xl px-5 py-3 shadow-2xl max-w-[280px]">
       <div class="flex items-start space-x-2">
-        <span class="text-primary text-base flex-shrink-0">✨</span>
+        <span class="text-primary text-base flex-shrink-0">&#10024;</span>
         <p id="quote-popup-text"
            class="text-xs text-slate-100 italic leading-relaxed flex-1"></p>
       </div>
-      <p class="text-[8px] text-primary/60 text-right mt-1.5 font-semibold tracking-wide">— Aria</p>
+      <p class="text-[8px] text-primary/60 text-right mt-1.5 font-semibold tracking-wide">&mdash; Aria</p>
     </div>
   </div>
 
-  <!-- Quote Drawer (slides in from left edge) -->
+  <!-- Quote Drawer (kept for backward compat, hidden by default) -->
   <div id="quote-drawer"
     class="fixed inset-y-0 left-0 w-44 bg-slate-950/98 border-r border-primary/20
-           z-[48] transform -translate-x-full flex flex-col overflow-hidden">
+           transform -translate-x-full flex flex-col overflow-hidden"
+    style="z-index:48;">
     <div class="flex items-center justify-between px-3 py-2 border-b border-slate-700/60 flex-shrink-0">
-      <span class="text-[10px] font-bold text-white tracking-wider uppercase">✨ Quotes</span>
+      <span class="text-[10px] font-bold text-white tracking-wider uppercase">&#10024; Quotes</span>
       <button id="drawer-close"
-        class="text-slate-500 hover:text-white no-drag transition-colors text-sm leading-none">✕</button>
+        class="text-slate-500 hover:text-white no-drag transition-colors text-sm leading-none">&#10005;</button>
     </div>
-    <div id="quote-drawer-list" class="flex-1 overflow-y-auto p-2 space-y-2">
-      <p class="text-[10px] text-slate-500 text-center mt-4 italic">No quotes yet…<br/>Check back in 30 min!</p>
+    <div id="quote-drawer-list-alt" class="flex-1 overflow-y-auto p-2 space-y-2">
+      <p class="text-[10px] text-slate-500 text-center mt-4 italic">No quotes yet&hellip;</p>
     </div>
   </div>
 
-  <!-- Drawer toggle tab (left edge) -->
+  <!-- Drawer toggle tab (left edge) — hidden in new design, quotes are inline -->
   <button id="drawer-toggle"
-    class="fixed left-0 top-1/2 -translate-y-1/2 z-[47] no-drag
+    class="fixed left-0 top-1/2 -translate-y-1/2 no-drag
            bg-slate-800/80 hover:bg-primary/20 border border-l-0 border-primary/25
            rounded-r-md w-4 h-10 flex items-center justify-center
-           transition-colors cursor-pointer">
-    <span class="text-primary text-[11px] leading-none">❝</span>
+           transition-colors cursor-pointer"
+    style="z-index:47; display:none;">
+    <span class="text-primary text-[11px] leading-none">&#10077;</span>
   </button>
 
   <!-- Chat panel (slides up) -->
-  <div id="chat-panel" class="fixed inset-x-0 bottom-0 h-2/3 bg-surface-light dark:bg-surface-dark rounded-t-3xl shadow-2xl z-50 flex flex-col translate-y-full border-t border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out">
-    <div class="flex justify-between items-center p-4 border-b border-slate-200 dark:border-slate-700">
-      <span id="chat-title" class="font-bold text-slate-800 dark:text-white">💬 Ask Aria</span>
-      <button id="chat-close" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 no-drag">
+  <div id="chat-panel" class="fixed inset-x-0 bottom-0 h-2/3 bg-surface-dark rounded-t-3xl shadow-2xl flex flex-col translate-y-full border-t border-slate-700 transition-transform duration-300 ease-in-out" style="z-index:50;">
+    <div class="flex justify-between items-center p-4 border-b border-slate-700">
+      <span id="chat-title" class="font-bold text-white">💬 Ask Aria</span>
+      <button id="chat-close" class="p-2 rounded-full hover:bg-slate-800 no-drag">
         <span class="material-icons-round text-slate-500">close</span>
       </button>
     </div>
     <div id="chat-history" class="flex-1 overflow-y-auto p-4 space-y-4"></div>
-    <div class="p-4 border-t border-slate-200 dark:border-slate-700 bg-background-light dark:bg-background-dark">
-      <div class="flex space-x-2 mb-3 overflow-x-auto pb-2 scrollbar-hide">
-        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Tell me a joke">😂 Joke</button>
-        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Motivate me">⚡ Motivate</button>
-        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="What should I know right now?">🧠 Insight</button>
-        <button id="btn-start-focus" class="whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🎯 Focus</button>
-        <button id="btn-find-partner" class="whitespace-nowrap px-3 py-1.5 bg-slate-200 dark:bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🤝 Partner</button>
+    <div class="p-4 border-t border-slate-700 bg-background-dark">
+      <div class="flex space-x-2 mb-3 overflow-x-auto pb-2">
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Tell me a joke">😂 Joke</button>
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="Motivate me">⚡ Motivate</button>
+        <button class="quick-btn whitespace-nowrap px-3 py-1.5 bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag" data-q="What should I know right now?">🧠 Insight</button>
+        <button id="btn-start-focus" class="whitespace-nowrap px-3 py-1.5 bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🎯 Focus</button>
+        <button id="btn-find-partner" class="whitespace-nowrap px-3 py-1.5 bg-slate-800 rounded-full text-xs font-medium hover:bg-primary hover:text-black transition-colors no-drag">🤝 Partner</button>
       </div>
       <div class="flex items-center space-x-2">
-        <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off" class="flex-1 bg-slate-100 dark:bg-slate-800 border-none rounded-full px-4 py-2 text-sm focus:ring-2 focus:ring-primary no-drag"/>
-        <button id="chat-send" class="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center hover:bg-primary-dim transition-colors no-drag">
+        <input id="chat-input" type="text" placeholder="Ask something…" autocomplete="off" class="flex-1 bg-slate-800 border-none rounded-full px-4 py-2 text-sm text-white focus:ring-2 focus:ring-primary no-drag"/>
+        <button id="chat-send" class="w-10 h-10 rounded-full bg-primary text-black flex items-center justify-center hover:opacity-80 transition-opacity no-drag">
           <span class="material-icons-round">send</span>
         </button>
       </div>
@@ -337,27 +271,13 @@
   </div>
 
   <!-- Settings panel (slides in from right) -->
-  <div id="settings-panel" class="fixed inset-y-0 right-0 w-80 bg-surface-light dark:bg-surface-dark shadow-2xl z-50 flex flex-col translate-x-full border-l border-slate-200 dark:border-slate-700 transition-transform duration-300 ease-in-out">
+  <div id="settings-panel" class="fixed inset-y-0 right-0 w-80 bg-surface-dark shadow-2xl flex flex-col translate-x-full border-l border-slate-700 transition-transform duration-300 ease-in-out" style="z-index:50;">
     <!-- injected by settings.js -->
   </div>
 
   <!-- Game overlay -->
-  <div id="game-overlay" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center">
+  <div id="game-overlay" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center" style="z-index:60;">
     <!-- injected by easter-eggs.js -->
-  </div>
-
-  <!-- Achievement toast notification -->
-  <div id="achievement-toast"
-    class="fixed bottom-4 left-1/2 -translate-x-1/2 z-[55] pointer-events-none
-           opacity-0 translate-y-4 transition-all duration-500 ease-out">
-    <div class="bg-slate-900 border border-primary/40 rounded-2xl px-4 py-2 shadow-2xl
-                flex items-center space-x-3 whitespace-nowrap">
-      <span class="text-base">🏆</span>
-      <div>
-        <div class="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Achievement Unlocked</div>
-        <div id="achievement-label" class="text-xs font-bold text-white">First Focus</div>
-      </div>
-    </div>
   </div>
 
   <!-- Scripts -->

@@ -6,7 +6,7 @@
 const THEMES = ['glassmorphism', 'cyberpunk', 'playful', 'organic'];
 
 const THEME_META = {
-  glassmorphism: { label: 'Glass',   swatchClass: 'swatch-glass',  accent: '#00d68f' },
+  glassmorphism: { label: 'Glass',   swatchClass: 'swatch-glass',  accent: '#7ec8e3' },
   cyberpunk:     { label: 'Cyber',   swatchClass: 'swatch-cyber',  accent: '#00ffff' },
   playful:       { label: 'Play',    swatchClass: 'swatch-play',   accent: '#ff6b9d' },
   organic:       { label: 'Organic', swatchClass: 'swatch-org',    accent: '#5ebd7a' },
@@ -40,7 +40,7 @@ const ThemeEngine = {
   onChange(cb) { _onChangeCallbacks.push(cb); },
 
   getAccent(theme = _currentTheme) {
-    return THEME_META[theme]?.accent || '#00ff88';
+    return THEME_META[theme]?.accent || '#7ec8e3';
   },
 
   getMeta() { return THEME_META; },
@@ -48,16 +48,16 @@ const ThemeEngine = {
 
   _apply(theme) {
     const root = document.documentElement;
-    
-    // Define theme variables
+
+    // Define theme variables for Tailwind
     const themeVars = {
       glassmorphism: {
-        '--color-primary': '#00FF94',
-        '--color-primary-dim': '#00CC76',
+        '--color-primary': '#7ec8e3',
+        '--color-primary-dim': '#5aa8c3',
         '--color-bg-light': '#F0F4F8',
         '--color-bg-dark': '#0B1120',
         '--color-surface-light': '#FFFFFF',
-        '--color-surface-dark': '#162032'
+        '--color-surface-dark': '#1a1f2e'
       },
       cyberpunk: {
         '--color-primary': '#00ffff',
@@ -90,7 +90,7 @@ const ThemeEngine = {
       root.style.setProperty(key, value);
     }
 
-    // Update data-theme
+    // Update data-theme on the widget
     const app = document.getElementById('app');
     if (app) app.dataset.theme = theme;
   },

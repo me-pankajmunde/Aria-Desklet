@@ -1,8 +1,8 @@
 /* ─── Soft & Playful / Tamagotchi Theme ──────────────────────────────────── */
-:root {
+#app[data-theme="playful"] {
   --accent:      #ff6b9d;
   --accent-dim:  #c44d7b;
-  --accent2:     #6bcbff;
+  --accent-gold: #ffb347;
   --text:        #3d2950;
   --text-dim:    #8a6a8a;
   --bg:          rgba(255, 235, 245, 0.94);
@@ -13,15 +13,8 @@
   --font-display:'Bubblegum Sans', cursive;
   --font-body:   'Nunito', sans-serif;
   --particle:    #ff6b9d;
-}
 
-#app[data-theme="playful"] {
-  background: linear-gradient(
-    135deg,
-    #fff0f8 0%,
-    #f0f4ff 40%,
-    #f4fff0 100%
-  );
+  background: linear-gradient(135deg, #fff0f8 0%, #f0f4ff 40%, #f4fff0 100%);
   border: 2px solid rgba(255, 107, 157, 0.2);
   box-shadow:
     0 8px 24px rgba(255, 107, 157, 0.15),
@@ -36,40 +29,30 @@
 }
 
 @keyframes wobble {
-  0%   { transform: rotate(0deg) translateY(-1px); }
-  25%  { transform: rotate(-1deg) translateY(-1px); }
-  75%  { transform: rotate(1deg) translateY(-1px); }
-  100% { transform: rotate(0deg) translateY(-1px); }
+  0%   { transform: rotate(0deg); }
+  25%  { transform: rotate(-1deg); }
+  75%  { transform: rotate(1deg); }
+  100% { transform: rotate(0deg); }
 }
 
-.poem-text {
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.6;
-  color: var(--text, #3d2950);
-}
-.clock-display {
-  font-weight: 900;
-  font-size: 13px;
-  color: var(--accent, #ff6b9d);
-}
-.live-dot {
-  color: var(--accent2, #6bcbff);
-  animation: bounce 0.8s ease-in-out infinite;
-}
-.greeting { color: var(--accent, #ff6b9d); font-weight: 700; }
-.icon-btn:hover { background: rgba(255,107,157,0.15); }
-#chat-input:focus { border-color: var(--accent, #ff6b9d); }
-.send-btn { background: var(--accent, #ff6b9d); color: #fff; }
-.quick-btn:hover { background: var(--accent, #ff6b9d); color: #fff; }
-.toggle-slider { background: rgba(0,0,0,0.1); }
-.setting-toggle input:checked + .toggle-slider { background: var(--accent, #ff6b9d); }
-.setting-toggle input:checked + .toggle-slider::before { background: #fff; }
-.setting-label { color: var(--text, #3d2950); }
-.setting-input { color: var(--text, #3d2950); background: rgba(0,0,0,0.04); border-color: rgba(255,107,157,0.2); }
-.settings-title { color: var(--text, #3d2950); }
-.chat-close:hover { color: var(--text, #3d2950); }
-.settings-close:hover { color: var(--text, #3d2950); }
-.chat-bubble.user { background: var(--accent, #ff6b9d); }
-.chat-bubble.assistant { background: rgba(0,0,0,0.05); color: var(--text, #3d2950); }
-#chat-title { color: var(--text-dim, #8a6a8a); }
+#app[data-theme="playful"] .aria-name { color: var(--accent); }
+#app[data-theme="playful"] .big-clock { color: var(--text); }
+#app[data-theme="playful"] .big-clock .period { color: var(--text-dim); }
+#app[data-theme="playful"] .mood-line { color: var(--text-dim); }
+#app[data-theme="playful"] .mood-line .mood-val { color: var(--accent); }
+#app[data-theme="playful"] .stat-label { color: var(--text-dim); }
+#app[data-theme="playful"] .stat-value { color: var(--text); }
+#app[data-theme="playful"] .stat-box { border-color: rgba(255,107,157,0.3); background: rgba(255,255,255,0.5); }
+#app[data-theme="playful"] .quotes-card { background: rgba(255,255,255,0.5); }
+#app[data-theme="playful"] .quotes-header { color: var(--text); }
+#app[data-theme="playful"] .quote-text { color: var(--text); }
+#app[data-theme="playful"] .speech-bubble { background: rgba(255,255,255,0.9); border-color: rgba(255,107,157,0.3); }
+#app[data-theme="playful"] .speech-bubble::before { background: rgba(255,255,255,0.9); }
+#app[data-theme="playful"] .speech-line { color: var(--text); }
+#app[data-theme="playful"] .speech-zone-pill { background: rgba(255,255,255,0.8); color: var(--text); border-color: rgba(255,107,157,0.4); }
+#app[data-theme="playful"] .settings-btn { background: rgba(255,107,157,0.15); }
+#app[data-theme="playful"] .settings-btn svg { fill: var(--accent); }
+#app[data-theme="playful"] .ctrl-btn { background: rgba(255,107,157,0.15); color: var(--accent); }
+#app[data-theme="playful"] .bottom-label { color: var(--text-dim); }
+#app[data-theme="playful"] .face-head { fill: #fff0f8; stroke: rgba(255,107,157,0.3); }
+#app[data-theme="playful"] .poem-preview { color: var(--text-dim); }

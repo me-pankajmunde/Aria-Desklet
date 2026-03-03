@@ -185,7 +185,7 @@ const SettingsPanel = {
   _applyPreview(key, value) {
     if (key === 'theme')       { ThemeEngine.set(value); return; }
     if (key === 'particles')   { ParticleEngine.setEnabled(value); return; }
-    if (key === 'show_face')   { document.getElementById('face-canvas').style.opacity = value ? 1 : 0; return; }
+    if (key === 'show_face')   { const fc = document.getElementById('face-container'); if (fc) fc.style.opacity = value ? 1 : 0; return; }
     if (key === 'voice_enabled' || key === 'auto_read_poems') { Voice.update(_spCfg); return; }
     if (key === 'poem_color')  {
       document.documentElement.style.setProperty('--accent', value);
