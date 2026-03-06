@@ -208,6 +208,12 @@
           <span class="text-[9px] text-primary font-semibold uppercase tracking-widest">FOCUS</span>
           <span id="buddy-elapsed" class="text-[9px] text-primary font-mono ml-0.5">0m</span>
         </div>
+        <!-- Project Tracker active-session badge -->
+        <div id="project-tracker-badge" class="hidden relative z-10 flex items-center space-x-1 mb-0.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse inline-block"></span>
+          <span id="pt-badge-name" class="text-[9px] text-blue-400 font-semibold truncate max-w-[70px]">Project</span>
+          <span id="pt-badge-time" class="text-[9px] text-blue-400 font-mono ml-0.5">0:00:00</span>
+        </div>
         <div class="relative z-10 flex flex-col items-center justify-center space-y-0.5">
           <!-- Clock (prominent) -->
           <span id="clock-display" class="text-primary font-mono text-2xl tracking-wider font-bold leading-none">--:--</span>
@@ -249,6 +255,9 @@
           </button>
           <button id="btn-voice" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-primary hover:text-black dark:hover:bg-primary dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
             <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">volume_up</span>
+          </button>
+          <button id="btn-projects" title="Project Tracker" class="group w-6 h-6 rounded-full bg-slate-100 dark:bg-slate-800 hover:bg-blue-400 hover:text-black dark:hover:bg-blue-400 dark:hover:text-black flex items-center justify-center transition-all duration-300 no-drag">
+            <span class="material-icons-round text-slate-600 dark:text-slate-300 group-hover:text-black text-[12px]">timer</span>
           </button>
           <button id="btn-settings" class="w-6 h-6 rounded-full border border-slate-200 dark:border-slate-700 flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors no-drag">
             <span class="material-icons-round text-slate-500 dark:text-slate-400 text-[12px]">settings</span>
@@ -341,6 +350,12 @@
     <!-- injected by settings.js -->
   </div>
 
+  <!-- Project Tracker panel (slides up from bottom) -->
+  <div id="project-tracker-panel"
+    class="fixed inset-x-0 bottom-0 h-3/4 bg-surface-light dark:bg-surface-dark rounded-t-3xl shadow-2xl z-[51] flex flex-col translate-y-full border-t border-slate-200 dark:border-slate-700">
+    <!-- injected by project-tracker-panel.js -->
+  </div>
+
   <!-- Game overlay -->
   <div id="game-overlay" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center">
     <!-- injected by easter-eggs.js -->
@@ -371,6 +386,8 @@
   <script src="js/settings-panel.js"></script>
   <script src="js/activity-tracker.js"></script>
   <script src="js/work-buddy.js"></script>
+  <script src="js/project-tracker.js"></script>
+  <script src="js/project-tracker-panel.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

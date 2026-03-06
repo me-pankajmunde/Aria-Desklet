@@ -3,7 +3,7 @@
  */
 'use strict';
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, desktopCapturer } = require('electron');
 
 contextBridge.exposeInMainWorld('rClock', {
   // Settings
@@ -31,6 +31,31 @@ contextBridge.exposeInMainWorld('rClock', {
   removeChatStreamListeners: () => {
     ['chat-stream-start-ack', 'chat-stream-token', 'chat-stream-done', 'chat-stream-error']
       .forEach(ch => ipcRenderer.removeAllListeners(ch));
+  },
+
+  // Project Tracker — project/task time tracking with optional screenshots
+  ptLoadData:        ()         => ipcRenderer.invoke('pt-load-data'),
+  ptSaveData:        (data)     => ipcRenderer.invoke('pt-save-data', data),
+  ptSaveScreenshot:  (payload)  => ipcRenderer.invoke('pt-save-screenshot', payload),
+  ptLoadScreenshot:  (filePath) => ipcRenderer.invoke('pt-load-screenshot', filePath),
+  ptPruneScreenshots:(paths)    => ipcRenderer.invoke('pt-prune-screenshots', paths),
+
+  // Capture the primary display thumbnail for activity tracking.
+  // Returns a JPEG dataURL, or null if the API is unavailable / permission denied.
+  ptCaptureScreen: async () => {
+    try {
+      const sources = await desktopCapturer.getSources({
+        types: ['screen'],
+        thumbnailSize: { width: 640, height: 360 },
+      });
+      if (sources && sources.length > 0) {
+        return sources[0].thumbnail.toDataURL('image/jpeg');
+      }
+      return null;
+    } catch (e) {
+      console.warn('[rClock] ptCaptureScreen failed:', e.message);
+      return null;
+    }
   },
 
   // App control

@@ -62,6 +62,10 @@ async function init() {
   if (window.ActivityTracker) await ActivityTracker.init();
   if (window.WorkBuddy)       WorkBuddy.init(cfg);
 
+  // Project Tracker
+  if (window.ProjectTracker)      await ProjectTracker.init();
+  if (window.ProjectTrackerPanel) ProjectTrackerPanel.init();
+
   // ── Achievement toast handler ────────────────────────────────────────────
   window.addEventListener('achievement-unlocked', (e) => {
     const label   = e.detail && e.detail.label ? e.detail.label : '🎉 Achievement!';
@@ -140,7 +144,6 @@ async function init() {
     applyThemeAccent();
     applyGlow();
   });
-
   // Theme change callbacks
   ThemeEngine.onChange((theme) => {
     const accent = ThemeEngine.getAccent(theme);
@@ -165,6 +168,11 @@ async function init() {
 
   // Settings button
   document.getElementById('btn-settings').addEventListener('click', () => SettingsPanel.show());
+
+  // Project Tracker button
+  document.getElementById('btn-projects')?.addEventListener('click', () => {
+    if (window.ProjectTrackerPanel) ProjectTrackerPanel.toggle();
+  });
 
   // Voice button (read poem)
   document.getElementById('btn-voice').addEventListener('click', () => {

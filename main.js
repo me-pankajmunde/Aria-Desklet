@@ -10,6 +10,9 @@ const path   = require('path');
 const fs     = require('fs');
 const os     = require('os');
 
+// ── Screenshots directory ───────────────────────────────────────────────────────
+const SCREENSHOTS_DIR = path.join(os.homedir(), '.config', 'rhyming-clock', 'screenshots');
+
 // ── Load env from .env if present ──────────────────────────────────────────────
 const envPath = path.join(os.homedir(), '.config', 'rhyming-clock', '.env');
 if (fs.existsSync(envPath)) {
@@ -53,6 +56,8 @@ const DEFAULTS = {
   easter_eggs:     true,
   at_sessions:     [],   // ActivityTracker persisted sessions (last 7 days)
   at_achievements: [],   // earned achievement ids
+  pt_projects:     [],   // ProjectTracker: project definitions
+  pt_logs:         [],   // ProjectTracker: completed time-log entries (last 30 days)
 };
 
 function loadSettings() {
@@ -310,6 +315,83 @@ ipcMain.handle('get-partner-profile', async (_e, { workPatterns, cfg }) => {
              + 'They respect deep work time but are available for quick syncs. '
              + 'Look for someone who brings complementary strengths and matches your dedication. 🤝',
     };
+  }
+});
+
+// ── Project Tracker IPC handlers ──────────────────────────────────────────────
+
+/** Load project + log data from settings. */
+ipcMain.handle('pt-load-data', () => {
+  const cfg = loadSettings();
+  return {
+    projects: cfg.pt_projects || [],
+    logs:     cfg.pt_logs     || [],
+  };
+});
+
+/** Persist projects and (auto-pruned) logs back to settings. */
+ipcMain.handle('pt-save-data', (_e, { projects, logs }) => {
+  const cfg    = loadSettings();
+  const cutoff = Date.now() - 30 * 24 * 60 * 60 * 1000; // keep 30 days
+  cfg.pt_projects = projects || [];
+  cfg.pt_logs     = (logs || []).filter(l => new Date(l.start).getTime() > cutoff);
+  saveSettings(cfg);
+  return true;
+});
+
+/**
+ * Receive a screenshot dataURL from the renderer, write it to disk, and
+ * return the saved file path.  Returns null on error so the caller can
+ * gracefully skip the screenshot.
+ */
+ipcMain.handle('pt-save-screenshot', (_e, { dataUrl }) => {
+  try {
+    if (!fs.existsSync(SCREENSHOTS_DIR)) {
+      fs.mkdirSync(SCREENSHOTS_DIR, { recursive: true });
+    }
+    // Strip "data:image/...;base64," prefix before decoding
+    const base64 = dataUrl.replace(/^data:image\/[^;]+;base64,/, '');
+    // Append a random hex suffix to guard against same-millisecond collisions
+    const rand     = Math.floor(Math.random() * 0xffff).toString(16).padStart(4, '0');
+    const filename = `screenshot-${Date.now()}-${rand}.jpg`;
+    const filepath = path.join(SCREENSHOTS_DIR, filename);
+    fs.writeFileSync(filepath, Buffer.from(base64, 'base64'));
+    return filepath;
+  } catch (e) {
+    console.error('[pt-save-screenshot] error:', e.message);
+    return null;
+  }
+});
+
+/**
+ * Load a screenshot file and return it as a base64 data URL so the
+ * renderer can display it without relaxing the img-src CSP.
+ */
+ipcMain.handle('pt-load-screenshot', (_e, filePath) => {
+  try {
+    const data = fs.readFileSync(filePath);
+    return `data:image/jpeg;base64,${data.toString('base64')}`;
+  } catch (e) {
+    return null;
+  }
+});
+
+/**
+ * Delete screenshot files that no longer have a corresponding log entry.
+ * Called during periodic cleanup so disk usage stays bounded.
+ */
+ipcMain.handle('pt-prune-screenshots', (_e, activePaths) => {
+  try {
+    if (!fs.existsSync(SCREENSHOTS_DIR)) return;
+    const kept = new Set(activePaths || []);
+    fs.readdirSync(SCREENSHOTS_DIR).forEach(f => {
+      const full = path.join(SCREENSHOTS_DIR, f);
+      if (!kept.has(full)) {
+        try { fs.unlinkSync(full); } catch { /* ignore individual errors */ }
+      }
+    });
+  } catch (e) {
+    console.warn('[pt-prune-screenshots] error:', e.message);
   }
 });
 
